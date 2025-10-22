@@ -1,0 +1,13 @@
+controllers:
+    resource:
+        path: ../src/Controller/
+        namespace: App\Controller
+    type: attribute
+
+# OAuth callback routes (handled by security system, not controllers)
+connect_google_check:
+    path: /connect/google/check
+
+connect_facebook_check:
+    path: /connect/facebook/check
+
