@@ -14,18 +14,21 @@ security:
             pattern: ^/(_(profiler|wdt)|css|images|js)/
             security: false
         api_docs:
-            pattern: ^/api/docs
+            pattern: ^/api$
+            security: false
+        api_auth_public:
+            pattern: ^/api/auth/(register|verify-email|login|forgot-password|reset-password|resend-verification)
+            stateless: true
             security: false
         api_oauth:
-            pattern: ^/api/(auth|oauth)
+            pattern: ^/api/oauth
             stateless: true
             security: false
         api:
             pattern: ^/api
             stateless: true
             provider: app_user_provider
-            # For stateless API authentication (JWT, API keys, etc.)
-            # custom_authenticators: []
+            jwt: ~
         main:
             lazy: true
             provider: app_user_provider
@@ -38,10 +41,13 @@ security:
     # Easy way to control access for large sections of your site
     # Note: Only the *first* access control that matches will be used
     access_control:
-         - { path: ^/api/auth, roles: PUBLIC_ACCESS }
+         - { path: ^/api$, roles: PUBLIC_ACCESS }
+         - { path: ^/api/docs, roles: PUBLIC_ACCESS }
+         - { path: ^/api/auth/(register|verify-email|login|forgot-password|reset-password|resend-verification), roles: PUBLIC_ACCESS }
+         - { path: ^/api/auth, roles: ROLE_USER }
          - { path: ^/api/oauth, roles: PUBLIC_ACCESS }
-         - { path: ^/api/me, roles: PUBLIC_ACCESS }
-         - { path: ^/api/user, roles: PUBLIC_ACCESS }
+         - { path: ^/oauth, roles: PUBLIC_ACCESS }
+         - { path: ^/api/me, roles: ROLE_USER }
          - { path: ^/api, roles: ROLE_USER }
          - { path: ^/admin, roles: ROLE_ADMIN }
          - { path: ^/profile, roles: ROLE_USER }
