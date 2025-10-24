@@ -8,6 +8,7 @@ use KnpU\OAuth2ClientBundle\Client\ClientRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Uid\Uuid;
 
 class ConnectController extends AbstractController
 {
@@ -75,10 +76,15 @@ class ConnectController extends AbstractController
     /**
      * Get user data by ID (for stateless authentication)
      */
-    #[Route('/api/user/{id}', name: 'api_user_by_id', methods: ['GET'], requirements: ['id' => '\d+'])]
-    public function getUserById(int $id): JsonResponse
+    #[Route('/api/user/{id}', name: 'api_user_by_id', methods: ['GET'])]
+    public function getUserById(string $id): JsonResponse
     {
-        $user = $this->em->getRepository(User::class)->find($id);
+        try {
+            $uuid = Uuid::fromString($id);
+            $user = $this->em->getRepository(User::class)->find($uuid);
+        } catch (\InvalidArgumentException $e) {
+            return new JsonResponse(['error' => 'Invalid UUID format'], 400);
+        }
         
         if (!$user) {
             return new JsonResponse(['error' => 'User not found'], 404);
