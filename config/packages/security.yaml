@@ -16,6 +16,9 @@ security:
         api_docs:
             pattern: ^/api$
             security: false
+        api_docs_extended:
+            pattern: ^/api/(docs|openapi|\.well-known|_format|context)
+            security: false
         api_auth_public:
             pattern: ^/api/auth/(register|verify-email|login|forgot-password|reset-password|resend-verification)
             stateless: true
@@ -43,6 +46,10 @@ security:
     access_control:
          - { path: ^/api$, roles: PUBLIC_ACCESS }
          - { path: ^/api/docs, roles: PUBLIC_ACCESS }
+         - { path: ^/api/\.well-known, roles: PUBLIC_ACCESS }
+         - { path: ^/api/_format, roles: PUBLIC_ACCESS }
+         - { path: ^/api/openapi, roles: PUBLIC_ACCESS }
+         - { path: ^/api/context, roles: PUBLIC_ACCESS }
          - { path: ^/api/auth/(register|verify-email|login|forgot-password|reset-password|resend-verification), roles: PUBLIC_ACCESS }
          - { path: ^/api/auth, roles: ROLE_USER }
          - { path: ^/api/oauth, roles: PUBLIC_ACCESS }
