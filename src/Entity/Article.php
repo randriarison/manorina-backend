@@ -3,6 +3,9 @@
 namespace App\Entity;
 
 use ApiPlatform\Metadata\ApiResource;
+use App\Entity\Traits\BlameableTrait;
+use App\Entity\Traits\SluggableTrait;
+use App\Entity\Traits\TimestampableTrait;
 use App\Enum\ArticleType;
 use App\Repository\ArticleRepository;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -17,6 +20,9 @@ use App\Enum\ArticleStatus;
 #[Broadcast]
 class Article
 {
+    use TimestampableTrait;
+    use BlameableTrait;
+    use SluggableTrait;
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
@@ -28,24 +34,13 @@ class Article
     #[ORM\Column(type: Types::TEXT)]
     private ?string $content = null;
 
-    #[ORM\Column(length: 255)]
-    private ?string $slug = null;
 
-    #[ORM\Column]
-    private ?\DateTimeImmutable $createdAt = null;
-
-    #[ORM\Column(nullable: true)]
-    private ?\DateTimeImmutable $updatedAt = null;
 
     #[ORM\Column(nullable: true)]
     private ?\DateTimeImmutable $publishedAt = null;
 
     #[ORM\Column(type: 'string', enumType: ArticleStatus::class, length: 25)]
     private ?ArticleStatus $status = null;
-
-    #[ORM\ManyToOne(inversedBy: 'articles')]
-    #[ORM\JoinColumn(nullable: false)]
-    private ?User $author = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     private ?string $contentMg = null;
@@ -73,9 +68,6 @@ class Article
 
     #[ORM\Column(enumType: ArticleType::class)]
     private ?ArticleType $ArticleType = null;
-
-    #[ORM\ManyToOne]
-    private ?User $updatedBy = null;
 
     public function __construct()
     {
@@ -111,41 +103,7 @@ class Article
         return $this;
     }
 
-    public function getSlug(): ?string
-    {
-        return $this->slug;
-    }
 
-    public function setSlug(string $slug): static
-    {
-        $this->slug = $slug;
-
-        return $this;
-    }
-
-    public function getCreatedAt(): ?\DateTimeImmutable
-    {
-        return $this->createdAt;
-    }
-
-    public function setCreatedAt(\DateTimeImmutable $createdAt): static
-    {
-        $this->createdAt = $createdAt;
-
-        return $this;
-    }
-
-    public function getUpdatedAt(): ?\DateTimeImmutable
-    {
-        return $this->updatedAt;
-    }
-
-    public function setUpdatedAt(?\DateTimeImmutable $updatedAt): static
-    {
-        $this->updatedAt = $updatedAt;
-
-        return $this;
-    }
 
     public function getPublishedAt(): ?\DateTimeImmutable
     {
@@ -171,17 +129,7 @@ class Article
         return $this;
     }
 
-    public function getAuthor(): ?User
-    {
-        return $this->author;
-    }
 
-    public function setAuthor(?User $author): static
-    {
-        $this->author = $author;
-
-        return $this;
-    }
 
     public function getContentMg(): ?string
     {
@@ -297,15 +245,5 @@ class Article
         return $this;
     }
 
-    public function getUpdatedBy(): ?User
-    {
-        return $this->updatedBy;
-    }
 
-    public function setUpdatedBy(?User $updatedBy): static
-    {
-        $this->updatedBy = $updatedBy;
-
-        return $this;
-    }
 }

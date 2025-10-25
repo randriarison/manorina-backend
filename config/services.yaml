@@ -23,3 +23,8 @@ services:
     App\OpenApi\OpenApiFactory:
         decorates: 'api_platform.openapi.factory'
         arguments: ['@.inner']
+
+    # Entity lifecycle event subscriber
+    App\EventSubscriber\EntityLifecycleSubscriber:
+        tags:
+            - { name: doctrine.event_subscriber }
