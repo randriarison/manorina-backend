@@ -2,12 +2,15 @@
 
 namespace App\Entity;
 
+use ApiPlatform\Metadata\ApiProperty;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Delete;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\Metadata\Link;
 use ApiPlatform\Metadata\Patch;
 use ApiPlatform\Metadata\Post;
+use App\State\ArticleSlugUriVariableTransformer;
 use App\Entity\Traits\BlameableTrait;
 use App\Entity\Traits\SluggableTrait;
 use App\Entity\Traits\TimestampableTrait;
@@ -25,26 +28,40 @@ use App\Enum\ArticleStatus;
 #[ApiResource(
     operations: [
         new GetCollection(
+            uriTemplate: '/articles',
             security: "true",
             normalizationContext: ['groups' => ['article:read']]
         ),
         new Get(
+            uriTemplate: '/articles/{slug}',
+            uriVariables: [
+                'slug' => new Link(fromClass: Article::class, identifiers: ['slug'], parameterName: 'slug')
+            ],
             security: "true",
             normalizationContext: ['groups' => ['article:read', 'article:details']]
         ),
         new Post(
+            uriTemplate: '/articles',
             security: "is_granted('IS_AUTHENTICATED_REMEMBERED')",
             securityMessage: "You must be authenticated to create articles.",
             denormalizationContext: ['groups' => ['article:write']],
             normalizationContext: ['groups' => ['article:read', 'article:details']]
         ),
         new Patch(
+            uriTemplate: '/articles/{slug}',
+            uriVariables: [
+                'slug' => new Link(fromClass: Article::class, identifiers: ['slug'], parameterName: 'slug')
+            ],
             security: "is_granted('ARTICLE_EDIT', object)",
             securityMessage: "You can only edit articles you created or if you have moderator privileges.",
             denormalizationContext: ['groups' => ['article:write']],
             normalizationContext: ['groups' => ['article:read', 'article:details']]
         ),
         new Delete(
+            uriTemplate: '/articles/{slug}',
+            uriVariables: [
+                'slug' => new Link(fromClass: Article::class, identifiers: ['slug'], parameterName: 'slug')
+            ],
             security: "is_granted('ARTICLE_DELETE', object)",
             securityMessage: "You can only delete articles you created or if you have moderator privileges."
         )
@@ -58,7 +75,7 @@ class Article
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['article:read'])]
+    #[ApiProperty(identifier: false)]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]

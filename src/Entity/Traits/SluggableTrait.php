@@ -2,13 +2,15 @@
 
 namespace App\Entity\Traits;
 
+use ApiPlatform\Metadata\ApiProperty;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Annotation\Groups;
 
 trait SluggableTrait
 {
-    #[ORM\Column(length: 255)]
+    #[ORM\Column(length: 255, unique: true)]
     #[Groups(['article:read'])]
+    #[ApiProperty(identifier: true)]
     private ?string $slug = null;
 
     public function getSlug(): ?string

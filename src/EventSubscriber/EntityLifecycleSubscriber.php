@@ -7,6 +7,7 @@ use App\Entity\Traits\SluggableTrait;
 use App\Entity\Traits\TimestampableTrait;
 use App\Entity\User;
 use Doctrine\Common\EventSubscriber;
+use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Event\PrePersistEventArgs;
 use Doctrine\ORM\Event\PreUpdateEventArgs;
 use Doctrine\ORM\Events;
@@ -17,7 +18,8 @@ class EntityLifecycleSubscriber implements EventSubscriber
 {
     public function __construct(
         private ?TokenStorageInterface $tokenStorage = null,
-        private ?SluggerInterface $slugger = null
+        private ?SluggerInterface $slugger = null,
+        private ?EntityManagerInterface $entityManager = null
     ) {}
 
     public function getSubscribedEvents(): array
@@ -50,9 +52,10 @@ class EntityLifecycleSubscriber implements EventSubscriber
         // Handle SluggableTrait
         if (method_exists($entity, 'updateSlug') && method_exists($entity, 'getTitle')) {
             $title = $entity->getTitle();
-            if ($title && $this->slugger) {
-                $slug = $this->slugger->slug($title)->lower();
-                $entity->updateSlug($title, (string) $slug);
+            if ($title && $this->slugger && $this->entityManager) {
+                $baseSlug = $this->slugger->slug($title)->lower();
+                $uniqueSlug = $this->generateUniqueSlug((string) $baseSlug, get_class($entity));
+                $entity->updateSlug($title, $uniqueSlug);
             }
         }
     }
@@ -79,9 +82,10 @@ class EntityLifecycleSubscriber implements EventSubscriber
             method_exists($entity, 'getTitle') && 
             $args->hasChangedField('title')) {
             $newTitle = $args->getNewValue('title');
-            if ($newTitle && $this->slugger) {
-                $slug = $this->slugger->slug($newTitle)->lower();
-                $entity->forceUpdateSlug((string) $slug);
+            if ($newTitle && $this->slugger && $this->entityManager) {
+                $baseSlug = $this->slugger->slug($newTitle)->lower();
+                $uniqueSlug = $this->generateUniqueSlug((string) $baseSlug, get_class($entity));
+                $entity->forceUpdateSlug($uniqueSlug);
             }
         }
     }
@@ -99,5 +103,35 @@ class EntityLifecycleSubscriber implements EventSubscriber
 
         $user = $token->getUser();
         return $user instanceof User ? $user : null;
+    }
+
+    private function generateUniqueSlug(string $baseSlug, string $entityClass): string
+    {
+        if (!$this->entityManager) {
+            return $baseSlug;
+        }
+
+        $repository = $this->entityManager->getRepository($entityClass);
+        $slug = $baseSlug;
+        $counter = 1;
+
+        // Check if slug already exists and increment counter until we find a unique one
+        while ($this->slugExists($repository, $slug)) {
+            $slug = $baseSlug . '-' . $counter;
+            $counter++;
+        }
+
+        return $slug;
+    }
+
+    private function slugExists($repository, string $slug): bool
+    {
+        try {
+            $existing = $repository->findOneBy(['slug' => $slug]);
+            return $existing !== null;
+        } catch (\Exception $e) {
+            // If repository doesn't have slug field, return false
+            return false;
+        }
     }
 }

@@ -26,6 +26,13 @@ services:
 
     # Entity lifecycle event subscriber
     App\EventSubscriber\EntityLifecycleSubscriber:
+        arguments:
+            $entityManager: '@doctrine.orm.entity_manager'
         tags:
             - { name: doctrine.event_listener, event: prePersist }
             - { name: doctrine.event_listener, event: preUpdate }
+    
+    # Article slug URI variable transformer
+    App\State\ArticleSlugUriVariableTransformer:
+        tags:
+            - { name: 'api_platform.uri_variable_transformer' }
