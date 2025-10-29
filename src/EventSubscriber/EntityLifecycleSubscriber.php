@@ -38,11 +38,13 @@ class EntityLifecycleSubscriber implements EventSubscriber
         }
 
         // Handle BlameableTrait for new entities
-        if (method_exists($entity, 'setAuthor') && method_exists($entity, 'getAuthor')) {
+        if (method_exists($entity, 'setAuthor')) {
             $currentUser = $this->getCurrentUser();
-            if ($currentUser && !$entity->getAuthor()) {
-                $entity->setAuthor($currentUser);
+            if (!$currentUser) {
+                throw new \RuntimeException('Cannot create entity with BlameableTrait: no authenticated user found');
             }
+            // Always set the author from the current authenticated user
+            $entity->setAuthor($currentUser);
         }
 
         // Handle SluggableTrait

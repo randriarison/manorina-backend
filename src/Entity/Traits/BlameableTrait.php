@@ -4,22 +4,25 @@ namespace App\Entity\Traits;
 
 use App\Entity\User;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 trait BlameableTrait
 {
     #[ORM\ManyToOne(targetEntity: User::class)]
     #[ORM\JoinColumn(nullable: false)]
-    private ?User $author = null;
+    #[Groups(['article:read', 'article:details'])]
+    private User $author;
 
     #[ORM\ManyToOne(targetEntity: User::class)]
+    #[Groups(['article:details'])]
     private ?User $updatedBy = null;
 
-    public function getAuthor(): ?User
+    public function getAuthor(): User
     {
         return $this->author;
     }
 
-    public function setAuthor(?User $author): static
+    public function setAuthor(User $author): static
     {
         $this->author = $author;
 

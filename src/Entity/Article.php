@@ -3,6 +3,11 @@
 namespace App\Entity;
 
 use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Delete;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\Metadata\Patch;
+use ApiPlatform\Metadata\Post;
 use App\Entity\Traits\BlameableTrait;
 use App\Entity\Traits\SluggableTrait;
 use App\Entity\Traits\TimestampableTrait;
@@ -12,12 +17,39 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Groups;
 use Symfony\UX\Turbo\Attribute\Broadcast;
 use App\Enum\ArticleStatus;
 
 #[ORM\Entity(repositoryClass: ArticleRepository::class)]
-#[ApiResource]
-#[Broadcast]
+#[ApiResource(
+    operations: [
+        new GetCollection(
+            security: "true",
+            normalizationContext: ['groups' => ['article:read']]
+        ),
+        new Get(
+            security: "true",
+            normalizationContext: ['groups' => ['article:read', 'article:details']]
+        ),
+        new Post(
+            security: "is_granted('IS_AUTHENTICATED_REMEMBERED')",
+            securityMessage: "You must be authenticated to create articles.",
+            denormalizationContext: ['groups' => ['article:write']],
+            normalizationContext: ['groups' => ['article:read', 'article:details']]
+        ),
+        new Patch(
+            security: "is_granted('ARTICLE_EDIT', object)",
+            securityMessage: "You can only edit articles you created or if you have moderator privileges.",
+            denormalizationContext: ['groups' => ['article:write']],
+            normalizationContext: ['groups' => ['article:read', 'article:details']]
+        ),
+        new Delete(
+            security: "is_granted('ARTICLE_DELETE', object)",
+            securityMessage: "You can only delete articles you created or if you have moderator privileges."
+        )
+    ]
+)]
 class Article
 {
     use TimestampableTrait;
@@ -26,20 +58,23 @@ class Article
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['article:read'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
+    #[Groups(['article:read', 'article:write'])]
     private ?string $title = null;
 
     #[ORM\Column(type: Types::TEXT)]
+    #[Groups(['article:read', 'article:write'])]
     private ?string $content = null;
 
-
-
     #[ORM\Column(nullable: true)]
+    #[Groups(['article:read', 'article:write'])]
     private ?\DateTimeImmutable $publishedAt = null;
 
     #[ORM\Column(type: 'string', enumType: ArticleStatus::class, length: 25)]
+    #[Groups(['article:read', 'article:write'])]
     private ?ArticleStatus $status = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
@@ -67,7 +102,13 @@ class Article
     private Collection $childArticles;
 
     #[ORM\Column(enumType: ArticleType::class)]
-    private ?ArticleType $ArticleType = null;
+    #[Groups(['article:read', 'article:write'])]
+    private ?ArticleType $articleType = null;
+
+    #[ORM\ManyToOne(targetEntity: User::class, inversedBy: 'articles')]
+    #[ORM\JoinColumn(nullable: false)]
+    #[Groups(['article:read', 'article:details'])]
+    private User $author;
 
     public function __construct()
     {
@@ -235,12 +276,12 @@ class Article
 
     public function getArticleType(): ?ArticleType
     {
-        return $this->ArticleType;
+        return $this->articleType;
     }
 
-    public function setArticleType(ArticleType $ArticleType): static
+    public function setArticleType(ArticleType $articleType): static
     {
-        $this->ArticleType = $ArticleType;
+        $this->articleType = $articleType;
 
         return $this;
     }

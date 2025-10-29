@@ -8,6 +8,7 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Component\Serializer\Annotation\Groups;
 use ApiPlatform\Metadata\ApiResource;
 use Symfony\Component\Uid\Uuid;
 
@@ -20,9 +21,11 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(type: 'uuid', unique: true)]
     #[ORM\GeneratedValue(strategy: 'CUSTOM')]
     #[ORM\CustomIdGenerator(class: 'doctrine.uuid_generator')]
+    #[Groups(['article:read', 'article:details'])]
     private ?Uuid $id = null;
 
     #[ORM\Column(length: 180)]
+    #[Groups(['article:read', 'article:details'])]
     private ?string $email = null;
 
     /**
@@ -44,6 +47,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?string $facebookId = null;
 
     #[ORM\Column(length: 255, nullable: true)]
+    #[Groups(['article:read', 'article:details'])]
     private ?string $name = null;
 
     #[ORM\Column(length: 255, nullable: true)]
@@ -362,10 +366,8 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function removeArticle(Article $article): static
     {
         if ($this->articles->removeElement($article)) {
-            // set the owning side to null (unless already changed)
-            if ($article->getAuthor() === $this) {
-                $article->setAuthor(null);
-            }
+            // Note: We don't set author to null as articles must always have an author
+            // If you need to transfer articles to another user, use setAuthor() explicitly
         }
 
         return $this;

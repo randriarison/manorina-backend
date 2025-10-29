@@ -27,4 +27,5 @@ services:
     # Entity lifecycle event subscriber
     App\EventSubscriber\EntityLifecycleSubscriber:
         tags:
-            - { name: doctrine.event_subscriber }
+            - { name: doctrine.event_listener, event: prePersist }
+            - { name: doctrine.event_listener, event: preUpdate }

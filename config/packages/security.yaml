@@ -27,6 +27,11 @@ security:
             pattern: ^/api/oauth
             stateless: true
             security: false
+        api_articles_get:
+            pattern: ^/api/articles
+            methods: [GET]
+            stateless: true
+            security: false
         api:
             pattern: ^/api
             stateless: true

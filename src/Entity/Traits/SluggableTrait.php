@@ -3,10 +3,12 @@
 namespace App\Entity\Traits;
 
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 trait SluggableTrait
 {
     #[ORM\Column(length: 255)]
+    #[Groups(['article:read'])]
     private ?string $slug = null;
 
     public function getSlug(): ?string
