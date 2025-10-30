@@ -23,8 +23,12 @@ use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Annotation\Groups;
 use Symfony\Component\Uid\Uuid;
 use App\Enum\ArticleStatus;
+use App\Validator\CommentMustHaveParent;
+use App\Validator\AnswerMustHaveQuestionParent;
 
 #[ORM\Entity(repositoryClass: ArticleRepository::class)]
+#[CommentMustHaveParent]
+#[AnswerMustHaveQuestionParent]
 #[ApiResource(
     operations: [
         new GetCollection(
@@ -277,15 +281,8 @@ class Article
     public function setParentArticle(?self $parentArticle): static
     {
         $this->parentArticle = $parentArticle;
-        if ($parentArticle) {
-            $this->setLevel($parentArticle->getLevel() + 1);
-            $this->setRootArticle($parentArticle->getRootArticle() ?? $parentArticle);
-            $children = $this->getChildArticles();
-            foreach ($children as $child) {
-                $child->setRootArticle($parentArticle->getRootArticle() ?? $parentArticle);
-            }
-        } else $this->setLevel(0);
-
+        // Note: Hierarchy management (level, rootArticle, counters) is handled 
+        // automatically by EntityLifecycleSubscriber
         return $this;
     }
 
@@ -399,11 +396,7 @@ class Article
     public function setLevel(?int $level): static
     {
         $this->level = $level;
-        $children = $this->getChildArticles();
-        foreach ($children as $child) {
-            $child->setLevel($level !== null ? $level + 1 : 1);
-        }
-
+        // Note: Child level updates are handled by EntityLifecycleSubscriber
         return $this;
     }
 

@@ -2,6 +2,7 @@
 
 namespace App\EventSubscriber;
 
+use App\Entity\Article;
 use App\Entity\Traits\BlameableTrait;
 use App\Entity\Traits\SluggableTrait;
 use App\Entity\Traits\TimestampableTrait;
@@ -43,10 +44,15 @@ class EntityLifecycleSubscriber implements EventSubscriber
         if (method_exists($entity, 'setAuthor')) {
             $currentUser = $this->getCurrentUser();
             if (!$currentUser) {
-                throw new \RuntimeException('Cannot create entity with BlameableTrait: no authenticated user found');
+                // Check if author is already set (e.g., in console commands)
+                if (method_exists($entity, 'getAuthor') && $entity->getAuthor() === null) {
+                    throw new \RuntimeException('Cannot create entity with BlameableTrait: no authenticated user found');
+                }
+                // If author is already set, don't override it
+            } else {
+                // Always set the author from the current authenticated user when available
+                $entity->setAuthor($currentUser);
             }
-            // Always set the author from the current authenticated user
-            $entity->setAuthor($currentUser);
         }
 
         // Handle SluggableTrait
@@ -57,6 +63,11 @@ class EntityLifecycleSubscriber implements EventSubscriber
                 $uniqueSlug = $this->generateUniqueSlug((string) $baseSlug, get_class($entity));
                 $entity->updateSlug($title, $uniqueSlug);
             }
+        }
+
+        // Handle Article hierarchy logic
+        if ($entity instanceof Article) {
+            $this->handleArticleHierarchy($entity);
         }
     }
 
@@ -87,6 +98,11 @@ class EntityLifecycleSubscriber implements EventSubscriber
                 $uniqueSlug = $this->generateUniqueSlug((string) $baseSlug, get_class($entity));
                 $entity->forceUpdateSlug($uniqueSlug);
             }
+        }
+
+        // Handle Article hierarchy changes
+        if ($entity instanceof Article && $args->hasChangedField('parentArticle')) {
+            $this->handleArticleHierarchyUpdate($entity, $args);
         }
     }
 
@@ -132,6 +148,101 @@ class EntityLifecycleSubscriber implements EventSubscriber
         } catch (\Exception $e) {
             // If repository doesn't have slug field, return false
             return false;
+        }
+    }
+
+    private function handleArticleHierarchy(Article $article): void
+    {
+        $parent = $article->getParentArticle();
+
+        if ($parent === null) {
+            // This is a root article
+            $article->setLevel(0);
+            $article->setRootArticle(null); // Root articles don't have a root article reference
+            $article->setDescendantCount(0); // New articles start with 0 descendants
+        } else {
+            // This article has a parent
+            $article->setLevel($parent->getLevel() + 1);
+            $article->setRootArticle($parent->getRootArticle() ?? $parent);
+            $article->setDescendantCount(0); // New articles start with 0 descendants
+
+            // Update parent's counters
+            $this->updateParentCounters($parent, 1);
+        }
+
+        // Initialize childrenCount to 0 for new articles
+        $article->setChildrenCount(0);
+    }
+
+    private function updateParentCounters(Article $parent, int $descendantIncrement): void
+    {
+        // Increment parent's children count
+        $parent->setChildrenCount(($parent->getChildrenCount() ?? 0) + 1);
+        
+        // Increment parent's descendant count by the increment value
+        $parent->setDescendantCount(($parent->getDescendantCount() ?? 0) + $descendantIncrement);
+
+        // Propagate the descendant count up the hierarchy
+        $grandParent = $parent->getParentArticle();
+        if ($grandParent !== null) {
+            $this->updateParentCounters($grandParent, $descendantIncrement);
+        }
+    }
+
+    private function handleArticleHierarchyUpdate(Article $article, PreUpdateEventArgs $args): void
+    {
+        $oldParent = $args->getOldValue('parentArticle');
+        $newParent = $args->getNewValue('parentArticle');
+
+        // If parent changed, we need to update counters for both old and new parents
+        if ($oldParent !== $newParent) {
+            // Decrease counters for old parent hierarchy
+            if ($oldParent instanceof Article) {
+                $this->decreaseParentCounters($oldParent, $article->getDescendantCount() + 1);
+            }
+
+            // Update article hierarchy based on new parent
+            if ($newParent === null) {
+                // Article is becoming a root article
+                $article->setLevel(0);
+                $article->setRootArticle(null);
+            } else {
+                // Article is getting a new parent
+                $article->setLevel($newParent->getLevel() + 1);
+                $article->setRootArticle($newParent->getRootArticle() ?? $newParent);
+                
+                // Update new parent's counters
+                $this->updateParentCounters($newParent, $article->getDescendantCount() + 1);
+            }
+
+            // Update all child articles to reflect the new hierarchy
+            $this->updateChildrenHierarchy($article);
+        }
+    }
+
+    private function decreaseParentCounters(Article $parent, int $descendantDecrement): void
+    {
+        // Decrease parent's children count
+        $parent->setChildrenCount(max(0, ($parent->getChildrenCount() ?? 0) - 1));
+        
+        // Decrease parent's descendant count by the decrement value
+        $parent->setDescendantCount(max(0, ($parent->getDescendantCount() ?? 0) - $descendantDecrement));
+
+        // Propagate the descendant count decrease up the hierarchy
+        $grandParent = $parent->getParentArticle();
+        if ($grandParent !== null) {
+            $this->decreaseParentCounters($grandParent, $descendantDecrement);
+        }
+    }
+
+    private function updateChildrenHierarchy(Article $article): void
+    {
+        foreach ($article->getChildArticles() as $child) {
+            $child->setLevel($article->getLevel() + 1);
+            $child->setRootArticle($article->getRootArticle() ?? $article);
+            
+            // Recursively update all descendants
+            $this->updateChildrenHierarchy($child);
         }
     }
 }
