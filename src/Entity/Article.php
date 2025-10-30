@@ -21,7 +21,7 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Annotation\Groups;
-use Symfony\UX\Turbo\Attribute\Broadcast;
+use Symfony\Component\Uid\Uuid;
 use App\Enum\ArticleStatus;
 
 #[ORM\Entity(repositoryClass: ArticleRepository::class)]
@@ -73,10 +73,11 @@ class Article
     use BlameableTrait;
     use SluggableTrait;
     #[ORM\Id]
-    #[ORM\GeneratedValue]
-    #[ORM\Column]
+    #[ORM\Column(type: 'uuid', unique: true)]
+    #[ORM\GeneratedValue(strategy: 'CUSTOM')]
+    #[ORM\CustomIdGenerator(class: 'doctrine.uuid_generator')]
     #[ApiProperty(identifier: false)]
-    private ?int $id = null;
+    private ?Uuid $id = null;
 
     #[ORM\Column(length: 255)]
     #[Groups(['article:read', 'article:write'])]
@@ -127,12 +128,31 @@ class Article
     #[Groups(['article:read', 'article:details'])]
     private User $author;
 
+    /**
+     * @var Collection<int, Category>
+     */
+    #[ORM\ManyToMany(targetEntity: Category::class, inversedBy: 'articles')]
+    private Collection $category;
+
+    #[ORM\ManyToOne(targetEntity: self::class)]
+    private ?self $rootArticle = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?int $childrenCount = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?int $descendantCount = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?int $level = null;
+
     public function __construct()
     {
         $this->childArticles = new ArrayCollection();
+        $this->category = new ArrayCollection();
     }
 
-    public function getId(): ?int
+    public function getId(): ?Uuid
     {
         return $this->id;
     }
@@ -257,6 +277,14 @@ class Article
     public function setParentArticle(?self $parentArticle): static
     {
         $this->parentArticle = $parentArticle;
+        if ($parentArticle) {
+            $this->setLevel($parentArticle->getLevel() + 1);
+            $this->setRootArticle($parentArticle->getRootArticle() ?? $parentArticle);
+            $children = $this->getChildArticles();
+            foreach ($children as $child) {
+                $child->setRootArticle($parentArticle->getRootArticle() ?? $parentArticle);
+            }
+        } else $this->setLevel(0);
 
         return $this;
     }
@@ -299,6 +327,82 @@ class Article
     public function setArticleType(ArticleType $articleType): static
     {
         $this->articleType = $articleType;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Category>
+     */
+    public function getCategory(): Collection
+    {
+        return $this->category;
+    }
+
+    public function addCategory(Category $category): static
+    {
+        if (!$this->category->contains($category)) {
+            $this->category->add($category);
+        }
+
+        return $this;
+    }
+
+    public function removeCategory(Category $category): static
+    {
+        $this->category->removeElement($category);
+
+        return $this;
+    }
+
+    public function getRootArticle(): ?self
+    {
+        return $this->rootArticle;
+    }
+
+    public function setRootArticle(?self $rootArticle): static
+    {
+        $this->rootArticle = $rootArticle;
+
+        return $this;
+    }
+
+    public function getChildrenCount(): ?int
+    {
+        return $this->childrenCount;
+    }
+
+    public function setChildrenCount(?int $childrenCount): static
+    {
+        $this->childrenCount = $childrenCount;
+
+        return $this;
+    }
+
+    public function getDescendantCount(): ?int
+    {
+        return $this->descendantCount;
+    }
+
+    public function setDescendantCount(?int $descendantCount): static
+    {
+        $this->descendantCount = $descendantCount;
+
+        return $this;
+    }
+
+    public function getLevel(): ?int
+    {
+        return $this->level;
+    }
+
+    public function setLevel(?int $level): static
+    {
+        $this->level = $level;
+        $children = $this->getChildArticles();
+        foreach ($children as $child) {
+            $child->setLevel($level !== null ? $level + 1 : 1);
+        }
 
         return $this;
     }
