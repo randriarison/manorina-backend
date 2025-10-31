@@ -45,7 +45,8 @@ class CategoryDenormalizer implements DenormalizerInterface, DenormalizerAwareIn
                     if ($slug) {
                         $existingCategory = $this->categoryRepository->findOneBy(['slug' => $slug]);
                         if ($existingCategory) {
-                            $categories->add($existingCategory);
+                            // Add the category and all its parent categories
+                            $this->addCategoryWithParents($categories, $existingCategory);
                         }
                     }
                 } elseif (is_array($singleCategoryData)) {
@@ -91,5 +92,19 @@ class CategoryDenormalizer implements DenormalizerInterface, DenormalizerAwareIn
             return $matches[1];
         }
         return null;
+    }
+
+    private function addCategoryWithParents(ArrayCollection $categories, Category $category): void
+    {
+        // Add the category itself if not already added
+        if (!$categories->contains($category)) {
+            $categories->add($category);
+        }
+
+        // Recursively add all parent categories
+        $parent = $category->getParent();
+        if ($parent !== null) {
+            $this->addCategoryWithParents($categories, $parent);
+        }
     }
 }
