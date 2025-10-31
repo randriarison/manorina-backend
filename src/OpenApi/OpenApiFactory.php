@@ -42,10 +42,16 @@ final class OpenApiFactory implements OpenApiFactoryInterface
             'description' => 'JWT token obtained from /api/auth/login endpoint'
         ]);
 
-        return $openApi->withComponents(
-            $components?->withSecuritySchemes($securitySchemes) ?? 
-            new Model\Components(securitySchemes: $securitySchemes)
-        );
+        // Set global security requirement for JWT
+        $security = $openApi->getSecurity() ?: [];
+        $security[] = new \ArrayObject(['JWT' => []]);
+
+        return $openApi
+            ->withComponents(
+                $components?->withSecuritySchemes($securitySchemes) ?? 
+                new Model\Components(securitySchemes: $securitySchemes)
+            )
+            ->withSecurity($security);
     }
 
     private function createRegisterPath(): Model\PathItem
