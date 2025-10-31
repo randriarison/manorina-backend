@@ -3,6 +3,7 @@
 namespace App\EventSubscriber;
 
 use App\Entity\Article;
+use App\Entity\Category;
 use App\Entity\Traits\BlameableTrait;
 use App\Entity\Traits\SluggableTrait;
 use App\Entity\Traits\TimestampableTrait;
@@ -75,6 +76,11 @@ class EntityLifecycleSubscriber implements EventSubscriber
         if ($entity instanceof Article) {
             $this->handleArticleHierarchy($entity);
         }
+
+        // Handle Category hierarchy logic
+        if ($entity instanceof Category) {
+            $this->handleCategoryHierarchy($entity);
+        }
     }
 
     public function preUpdate(PreUpdateEventArgs $args): void
@@ -117,6 +123,11 @@ class EntityLifecycleSubscriber implements EventSubscriber
         // Handle Article hierarchy changes
         if ($entity instanceof Article && $args->hasChangedField('parentArticle')) {
             $this->handleArticleHierarchyUpdate($entity, $args);
+        }
+
+        // Handle Category hierarchy changes
+        if ($entity instanceof Category && $args->hasChangedField('parent')) {
+            $this->handleCategoryHierarchyUpdate($entity, $args);
         }
     }
 
@@ -257,6 +268,42 @@ class EntityLifecycleSubscriber implements EventSubscriber
             
             // Recursively update all descendants
             $this->updateChildrenHierarchy($child);
+        }
+    }
+
+    private function handleCategoryHierarchy(Category $category): void
+    {
+        // Set level based on parent
+        if ($category->getParent() !== null) {
+            $category->setLevel($category->getParent()->getLevel() + 1);
+        } else {
+            $category->setLevel(0); // Root category
+        }
+    }
+
+    private function handleCategoryHierarchyUpdate(Category $category, PreUpdateEventArgs $args): void
+    {
+        $oldParent = $args->getOldValue('parent');
+        $newParent = $args->getNewValue('parent');
+
+        // Update level based on new parent
+        if ($newParent !== null) {
+            $category->setLevel($newParent->getLevel() + 1);
+        } else {
+            $category->setLevel(0); // Root category
+        }
+
+        // Update all children levels recursively
+        $this->updateCategoryChildrenHierarchy($category);
+    }
+
+    private function updateCategoryChildrenHierarchy(Category $category): void
+    {
+        foreach ($category->getChildren() as $child) {
+            $child->setLevel($category->getLevel() + 1);
+            
+            // Recursively update all descendants
+            $this->updateCategoryChildrenHierarchy($child);
         }
     }
 }
