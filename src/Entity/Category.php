@@ -4,6 +4,11 @@ namespace App\Entity;
 
 use ApiPlatform\Metadata\ApiProperty;
 use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\Metadata\Post;
+use ApiPlatform\Metadata\Patch;
+use ApiPlatform\Metadata\Delete;
 use App\Repository\CategoryRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -12,9 +17,42 @@ use Symfony\Component\Uid\Uuid;
 use App\Entity\Traits\BlameableTrait;
 use App\Entity\Traits\SluggableTrait;
 use App\Entity\Traits\TimestampableTrait;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: CategoryRepository::class)]
-#[ApiResource]
+#[ApiResource(
+    operations: [
+        new GetCollection(
+            uriTemplate: '/categories',
+            security: "true",
+            normalizationContext: ['groups' => ['category:read']]
+        ),
+        new Get(
+            uriTemplate: '/categories/{slug}',
+            security: "true",
+            normalizationContext: ['groups' => ['category:read']]
+        ),
+        new Post(
+            uriTemplate: '/categories',
+            security: "is_granted('IS_AUTHENTICATED_REMEMBERED')",
+            securityMessage: "You must be authenticated to create categories.",
+            denormalizationContext: ['groups' => ['category:write']],
+            normalizationContext: ['groups' => ['category:read']]
+        ),
+        new Patch(
+            uriTemplate: '/categories/{slug}',
+            security: "is_granted('ROLE_ADMIN') or object.getAuthor() == user",
+            securityMessage: "You can only edit categories you created or if you have admin privileges.",
+            denormalizationContext: ['groups' => ['category:write']],
+            normalizationContext: ['groups' => ['category:read']]
+        ),
+        new Delete(
+            uriTemplate: '/categories/{slug}',
+            security: "is_granted('ROLE_ADMIN') or object.getAuthor() == user",
+            securityMessage: "You can only delete categories you created or if you have admin privileges."
+        )
+    ]
+)]
 class Category
 {
     use TimestampableTrait;
@@ -28,18 +66,22 @@ class Category
     private ?Uuid $id = null;
 
     #[ORM\Column(length: 255)]
+    #[Groups(['category:read', 'category:write', 'article:read'])]
     private ?string $name = null;
 
     #[ORM\ManyToOne(targetEntity: self::class, inversedBy: 'children')]
+    #[Groups(['category:read', 'category:write'])]
     private ?self $parent = null;
 
     /**
      * @var Collection<int, self>
      */
     #[ORM\OneToMany(targetEntity: self::class, mappedBy: 'parent')]
+    #[Groups(['category:read'])]
     private Collection $children;
 
     #[ORM\Column]
+    #[Groups(['category:read', 'category:write'])]
     private ?int $level = null;
 
     /**

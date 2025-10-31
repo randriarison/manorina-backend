@@ -32,6 +32,11 @@ security:
             methods: [GET]
             stateless: true
             security: false
+        api_categories_get:
+            pattern: ^/api/categories
+            methods: [GET]
+            stateless: true
+            security: false
         api:
             pattern: ^/api
             stateless: true

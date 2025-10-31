@@ -9,7 +9,7 @@ use Symfony\Component\Serializer\Annotation\Groups;
 trait SluggableTrait
 {
     #[ORM\Column(length: 255, unique: true)]
-    #[Groups(['article:read'])]
+    #[Groups(['article:read', 'category:read'])]
     #[ApiProperty(identifier: true)]
     private ?string $slug = null;
 

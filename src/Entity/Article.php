@@ -135,7 +135,8 @@ class Article
     /**
      * @var Collection<int, Category>
      */
-    #[ORM\ManyToMany(targetEntity: Category::class, inversedBy: 'articles')]
+    #[ORM\ManyToMany(targetEntity: Category::class, inversedBy: 'articles', cascade: ['persist'])]
+    #[Groups(['article:read', 'article:write'])]
     private Collection $category;
 
     #[ORM\ManyToOne(targetEntity: self::class)]

@@ -56,12 +56,18 @@ class EntityLifecycleSubscriber implements EventSubscriber
         }
 
         // Handle SluggableTrait
-        if (method_exists($entity, 'updateSlug') && method_exists($entity, 'getTitle')) {
-            $title = $entity->getTitle();
-            if ($title && $this->slugger && $this->entityManager) {
-                $baseSlug = $this->slugger->slug($title)->lower();
+        if (method_exists($entity, 'updateSlug')) {
+            $sourceText = null;
+            if (method_exists($entity, 'getTitle')) {
+                $sourceText = $entity->getTitle();
+            } elseif (method_exists($entity, 'getName')) {
+                $sourceText = $entity->getName();
+            }
+            
+            if ($sourceText && $this->slugger && $this->entityManager) {
+                $baseSlug = $this->slugger->slug($sourceText)->lower();
                 $uniqueSlug = $this->generateUniqueSlug((string) $baseSlug, get_class($entity));
-                $entity->updateSlug($title, $uniqueSlug);
+                $entity->updateSlug($sourceText, $uniqueSlug);
             }
         }
 
@@ -88,13 +94,21 @@ class EntityLifecycleSubscriber implements EventSubscriber
             }
         }
 
-        // Handle SluggableTrait - regenerate slug if title changed
-        if (method_exists($entity, 'forceUpdateSlug') && 
-            method_exists($entity, 'getTitle') && 
-            $args->hasChangedField('title')) {
-            $newTitle = $args->getNewValue('title');
-            if ($newTitle && $this->slugger && $this->entityManager) {
-                $baseSlug = $this->slugger->slug($newTitle)->lower();
+        // Handle SluggableTrait - regenerate slug if title or name changed
+        if (method_exists($entity, 'forceUpdateSlug')) {
+            $sourceText = null;
+            $hasChanged = false;
+            
+            if (method_exists($entity, 'getTitle') && $args->hasChangedField('title')) {
+                $sourceText = $args->getNewValue('title');
+                $hasChanged = true;
+            } elseif (method_exists($entity, 'getName') && $args->hasChangedField('name')) {
+                $sourceText = $args->getNewValue('name');
+                $hasChanged = true;
+            }
+            
+            if ($hasChanged && $sourceText && $this->slugger && $this->entityManager) {
+                $baseSlug = $this->slugger->slug($sourceText)->lower();
                 $uniqueSlug = $this->generateUniqueSlug((string) $baseSlug, get_class($entity));
                 $entity->forceUpdateSlug($uniqueSlug);
             }
