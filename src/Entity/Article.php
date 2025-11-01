@@ -25,10 +25,15 @@ use Symfony\Component\Uid\Uuid;
 use App\Enum\ArticleStatus;
 use App\Validator\CommentMustHaveParent;
 use App\Validator\AnswerMustHaveQuestionParent;
+use ApiPlatform\Metadata\ApiFilter;
+use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
 
 #[ORM\Entity(repositoryClass: ArticleRepository::class)]
 #[CommentMustHaveParent]
 #[AnswerMustHaveQuestionParent]
+#[ApiFilter(SearchFilter::class,
+    properties: ['category.name' => 'ipartial', 'category.id' => 'exact']
+)]
 #[ApiResource(
     operations: [
         new GetCollection(

@@ -36,3 +36,10 @@ services:
     App\State\ArticleSlugUriVariableTransformer:
         tags:
             - { name: 'api_platform.uri_variable_transformer' }
+
+    App\ApiPlatform\Extension\ArticleExtension:
+        arguments:
+            $security: '@security.helper'
+        tags:
+            - { name: api_platform.doctrine.orm.query_extension.collection }
+            - { name: api_platform.doctrine.orm.query_extension.item }
