@@ -36,7 +36,7 @@ use App\Filter\BinaryUuidFilter;
     properties: ['category.name' => 'ipartial']
 )]
 #[ApiFilter(BinaryUuidFilter::class,
-    properties: ['category' => 'exact']
+    properties: ['category' => 'exact', 'author' => 'exact']
 )]
 #[ApiResource(
     operations: [

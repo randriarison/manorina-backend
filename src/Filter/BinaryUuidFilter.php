@@ -59,7 +59,13 @@ final class BinaryUuidFilter extends AbstractFilter
                 'property' => 'id',
                 'type' => Type::string(),
                 'required' => false,
-                'description' => 'Filter articles by category UUID',
+                'description' => 'Filter articles by category id',
+            ];
+             $description['author'] = [
+                'property' => 'id',
+                'type' => Type::string(),
+                'required' => false,
+                'description' => 'Filter articles by author id',
             ];
             
         } elseif ($resourceClass === "App\Entity\Transaction") {
