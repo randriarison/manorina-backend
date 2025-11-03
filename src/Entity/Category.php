@@ -64,6 +64,7 @@ class Category
     #[ORM\GeneratedValue(strategy: 'CUSTOM')]
     #[ORM\CustomIdGenerator(class: 'doctrine.uuid_generator')]
     #[ApiProperty(identifier: false)]
+    #[Groups(['category:read'])]
     private ?Uuid $id = null;
 
     #[ORM\Column(length: 255)]
@@ -94,6 +95,12 @@ class Category
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     #[Groups(['category:read', 'category:write'])]
     private ?string $description = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $nameMg = null;
+
+    #[ORM\Column(type: Types::TEXT, nullable: true)]
+    private ?string $descriptionMg = null;
 
     public function __construct()
     {
@@ -207,6 +214,30 @@ class Category
     public function setDescription(?string $description): static
     {
         $this->description = $description;
+
+        return $this;
+    }
+
+    public function getNameMg(): ?string
+    {
+        return $this->nameMg;
+    }
+
+    public function setNameMg(?string $nameMg): static
+    {
+        $this->nameMg = $nameMg;
+
+        return $this;
+    }
+
+    public function getDescriptionMg(): ?string
+    {
+        return $this->descriptionMg;
+    }
+
+    public function setDescriptionMg(?string $descriptionMg): static
+    {
+        $this->descriptionMg = $descriptionMg;
 
         return $this;
     }
