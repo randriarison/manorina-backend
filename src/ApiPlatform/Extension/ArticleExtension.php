@@ -8,6 +8,7 @@ use Doctrine\ORM\QueryBuilder;
 use Symfony\Bundle\SecurityBundle\Security;
 use App\Entity\Article;
 use ApiPlatform\Metadata\Operation;
+use App\Enum\ArticleStatus;
 
 final class ArticleExtension implements QueryCollectionExtensionInterface, QueryItemExtensionInterface
 {
@@ -27,14 +28,15 @@ final class ArticleExtension implements QueryCollectionExtensionInterface, Query
         if (!$user) {
             // Visiteur non connecté : ne voir que les articles publiés
             $qb->andWhere(sprintf('%s.status = :published', $rootAlias))
-               ->setParameter('published', 'published');
+               ->setParameter('published', ArticleStatus::PUBLISHED);
             return;
         }
 
         // Utilisateur connecté : voir tous ses articles + ceux publiés
-        $qb->andWhere(sprintf('(%s.status = :published OR %s.author = :current_user)', $rootAlias, $rootAlias))
-           ->setParameter('published', 'published')
-           ->setParameter('current_user', $user);
+        $qb->join(sprintf('%s.author', $rootAlias), 'author')
+        ->andWhere(sprintf('(%s.status = :published OR author.email = :current_user_id)', $rootAlias, $rootAlias))
+           ->setParameter('published', ArticleStatus::PUBLISHED)
+           ->setParameter('current_user_id', $user->getUserIdentifier());
     }
 
     public function applyToCollection(QueryBuilder $queryBuilder, QueryNameGeneratorInterface $queryNameGenerator, string $resourceClass, ?Operation $operation = null, array $context = []): void
