@@ -43,3 +43,8 @@ services:
         tags:
             - { name: api_platform.doctrine.orm.query_extension.collection }
             - { name: api_platform.doctrine.orm.query_extension.item }
+    
+    App\Filter\BinaryUuidFilter:
+        tags:
+            - { name: 'api_platform.filter', id: 'App\Filter\BinaryUuidFilter' }
+

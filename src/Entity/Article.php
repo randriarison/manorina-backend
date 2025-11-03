@@ -27,12 +27,16 @@ use App\Validator\CommentMustHaveParent;
 use App\Validator\AnswerMustHaveQuestionParent;
 use ApiPlatform\Metadata\ApiFilter;
 use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
+use App\Filter\BinaryUuidFilter;
 
 #[ORM\Entity(repositoryClass: ArticleRepository::class)]
 #[CommentMustHaveParent]
 #[AnswerMustHaveQuestionParent]
 #[ApiFilter(SearchFilter::class,
-    properties: ['category.name' => 'ipartial', 'category.id' => 'exact']
+    properties: ['category.name' => 'ipartial']
+)]
+#[ApiFilter(BinaryUuidFilter::class,
+    properties: ['category' => 'exact']
 )]
 #[ApiResource(
     operations: [
