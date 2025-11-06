@@ -131,6 +131,7 @@ class Article
     private ?string $initialLang = null;
 
     #[ORM\ManyToOne(targetEntity: self::class, inversedBy: 'childArticles')]
+    #[Groups(['article:read', 'article:write'])]
     private ?self $parentArticle = null;
 
     /**

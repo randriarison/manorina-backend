@@ -4,6 +4,7 @@ namespace App\Serializer;
 
 use App\Entity\Article;
 use App\Entity\Category;
+use App\Repository\ArticleRepository;
 use App\Repository\CategoryRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
@@ -15,10 +16,11 @@ class CategoryDenormalizer implements DenormalizerInterface, DenormalizerAwareIn
 {
     use DenormalizerAwareTrait;
 
-    private const ALREADY_CALLED = 'CATEGORY_DENORMALIZER_ALREADY_CALLED';
+    private const ALREADY_CALLED = 'ARTICLE_DENORMALIZER_ALREADY_CALLED';
 
     public function __construct(
-        private CategoryRepository $categoryRepository
+        private CategoryRepository $categoryRepository,
+        private ArticleRepository $articleRepository
     ) {
     }
 
@@ -27,9 +29,11 @@ class CategoryDenormalizer implements DenormalizerInterface, DenormalizerAwareIn
         // Prevent infinite recursion
         $context[self::ALREADY_CALLED] = true;
 
-        // Remove category data temporarily to avoid conflicts with normal denormalization
+        // Remove category and parentArticle data temporarily to avoid conflicts with normal denormalization
         $categoryData = $data['category'] ?? null;
+        $parentArticleData = $data['parentArticle'] ?? null;
         unset($data['category']);
+        unset($data['parentArticle']);
 
         // First, denormalize the article normally
         $article = $this->denormalizer->denormalize($data, $type, $format, $context);
@@ -66,6 +70,18 @@ class CategoryDenormalizer implements DenormalizerInterface, DenormalizerAwareIn
             }
         }
 
+        // Handle parentArticle field specially
+        if ($parentArticleData && is_string($parentArticleData)) {
+            // It's an IRI string - extract slug and find existing article
+            $slug = $this->extractSlugFromArticleIri($parentArticleData);
+            if ($slug) {
+                $parentArticle = $this->articleRepository->findOneBy(['slug' => $slug]);
+                if ($parentArticle) {
+                    $article->setParentArticle($parentArticle);
+                }
+            }
+        }
+
         return $article;
     }
 
@@ -74,8 +90,10 @@ class CategoryDenormalizer implements DenormalizerInterface, DenormalizerAwareIn
         // Only handle Article denormalization and prevent infinite recursion
         return $type === Article::class 
             && !isset($context[self::ALREADY_CALLED])
-            && isset($data['category']) 
-            && is_array($data['category']);
+            && (
+                (isset($data['category']) && is_array($data['category'])) ||
+                (isset($data['parentArticle']) && is_string($data['parentArticle']))
+            );
     }
 
     public function getSupportedTypes(?string $format): array
@@ -89,6 +107,15 @@ class CategoryDenormalizer implements DenormalizerInterface, DenormalizerAwareIn
     {
         // Extract slug from IRI like "/api/categories/my-category-slug"
         if (preg_match('#/categories/([^/]+)$#', $iri, $matches)) {
+            return $matches[1];
+        }
+        return null;
+    }
+
+    private function extractSlugFromArticleIri(string $iri): ?string
+    {
+        // Extract slug from IRI like "/api/articles/my-article-slug"
+        if (preg_match('#/articles/([^/]+)$#', $iri, $matches)) {
             return $matches[1];
         }
         return null;
