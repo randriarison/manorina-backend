@@ -45,6 +45,13 @@ use App\Filter\BinaryUuidFilter;
             security: "true",
             normalizationContext: ['groups' => ['article:read']]
         ),
+        new GetCollection(
+            uriTemplate: '/articles/only-mine',
+            security: "is_granted('IS_AUTHENTICATED_REMEMBERED')",
+            securityMessage: "You must be authenticated to access your articles.",
+            normalizationContext: ['groups' => ['article:read', 'article:details']],
+            provider: \App\State\UserArticlesProvider::class
+        ),
         new Get(
             uriTemplate: '/articles/{slug}',
             uriVariables: [

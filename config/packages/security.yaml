@@ -66,6 +66,7 @@ security:
          - { path: ^/api/auth, roles: ROLE_USER }
          - { path: ^/api/oauth, roles: PUBLIC_ACCESS }
          - { path: ^/oauth, roles: PUBLIC_ACCESS }
+         - { path: ^/api/articles/only-mine$, methods: [GET], roles: ROLE_USER }
          - { path: ^/api/articles$, methods: [GET], roles: PUBLIC_ACCESS }
          - { path: ^/api/articles/.+$, methods: [GET], roles: PUBLIC_ACCESS }
          - { path: ^/api/categories$, methods: [GET], roles: PUBLIC_ACCESS }

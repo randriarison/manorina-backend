@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Only-Mine Articles Endpoint</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        .test-section { margin: 20px 0; padding: 20px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { background-color: #d4edda; }
+        .error { background-color: #f8d7da; }
+        .info { background-color: #d1ecf1; }
+        button { padding: 10px 20px; margin: 10px 5px; cursor: pointer; }
+        .token-input { width: 100%; padding: 10px; margin: 5px 0; }
+        pre { background: #f4f4f4; padding: 10px; border-radius: 3px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>Test /api/articles/only-mine Endpoint</h1>
+
+    <div class="test-section info">
+        <h3>Available JWT Tokens (from test data)</h3>
+        <p><strong>Author 1 (2 articles):</strong> author1@example.com</p>
+        <input type="text" id="token1" class="token-input" placeholder="Paste token for author1 here" />
+        
+        <p><strong>Author 2 (1 article):</strong> author2@example.com</p>
+        <input type="text" id="token2" class="token-input" placeholder="Paste token for author2 here" />
+        
+        <p><em>Run "php bin/console test:only-mine-endpoint" to get fresh tokens</em></p>
+    </div>
+
+    <div class="test-section">
+        <h3>Test 1: Without Authentication (Should return 401)</h3>
+        <button onclick="testWithoutAuth()">Test No Auth</button>
+        <div id="result1"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>Test 2: With Author 1 Token (Should return 2 articles)</h3>
+        <button onclick="testWithAuthor1()">Test Author 1</button>
+        <div id="result2"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>Test 3: With Author 2 Token (Should return 1 article)</h3>
+        <button onclick="testWithAuthor2()">Test Author 2</button>
+        <div id="result3"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>Test 4: Compare with Public Articles Endpoint</h3>
+        <button onclick="testPublicArticles()">Test Public Articles</button>
+        <div id="result4"></div>
+    </div>
+
+    <script>
+        const baseUrl = 'http://127.0.0.1:8000/api';
+
+        async function makeRequest(url, headers = {}) {
+            try {
+                const response = await fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...headers
+                    }
+                });
+
+                const data = await response.json();
+                return {
+                    status: response.status,
+                    data: data,
+                    ok: response.ok
+                };
+            } catch (error) {
+                return {
+                    status: 0,
+                    error: error.message,
+                    ok: false
+                };
+            }
+        }
+
+        function displayResult(elementId, result, expectedStatus = null) {
+            const element = document.getElementById(elementId);
+            const isExpected = expectedStatus ? result.status === expectedStatus : result.ok;
+            
+            element.className = isExpected ? 'success' : 'error';
+            
+            let html = `<h4>Status: ${result.status} ${result.ok ? '✅' : '❌'}</h4>`;
+            
+            if (result.data) {
+                if (Array.isArray(result.data)) {
+                    html += `<p><strong>Articles Count:</strong> ${result.data.length}</p>`;
+                    if (result.data.length > 0) {
+                        html += '<h5>Articles:</h5><ul>';
+                        result.data.forEach(article => {
+                            html += `<li><strong>${article.title}</strong> - ${article.author?.email || 'No author'}</li>`;
+                        });
+                        html += '</ul>';
+                    }
+                } else {
+                    html += `<pre>${JSON.stringify(result.data, null, 2)}</pre>`;
+                }
+            } else if (result.error) {
+                html += `<p><strong>Error:</strong> ${result.error}</p>`;
+            }
+            
+            element.innerHTML = html;
+        }
+
+        async function testWithoutAuth() {
+            const result = await makeRequest(`${baseUrl}/articles/only-mine`);
+            displayResult('result1', result, 401);
+        }
+
+        async function testWithAuthor1() {
+            const token = document.getElementById('token1').value.trim();
+            if (!token) {
+                alert('Please paste the token for Author 1');
+                return;
+            }
+            
+            const result = await makeRequest(`${baseUrl}/articles/only-mine`, {
+                'Authorization': `Bearer ${token}`
+            });
+            displayResult('result2', result, 200);
+        }
+
+        async function testWithAuthor2() {
+            const token = document.getElementById('token2').value.trim();
+            if (!token) {
+                alert('Please paste the token for Author 2');
+                return;
+            }
+            
+            const result = await makeRequest(`${baseUrl}/articles/only-mine`, {
+                'Authorization': `Bearer ${token}`
+            });
+            displayResult('result3', result, 200);
+        }
+
+        async function testPublicArticles() {
+            const result = await makeRequest(`${baseUrl}/articles`);
+            displayResult('result4', result, 200);
+        }
+    </script>
+</body>
+</html>
