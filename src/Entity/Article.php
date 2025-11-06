@@ -36,7 +36,7 @@ use App\Filter\BinaryUuidFilter;
     properties: ['category.name' => 'ipartial']
 )]
 #[ApiFilter(BinaryUuidFilter::class,
-    properties: ['category' => 'exact', 'author' => 'exact']
+    properties: ['category' => 'exact', 'author' => 'exact', 'parentArticle' => 'exact'], 
 )]
 #[ApiResource(
     operations: [
@@ -97,6 +97,7 @@ class Article
     #[ORM\GeneratedValue(strategy: 'CUSTOM')]
     #[ORM\CustomIdGenerator(class: 'doctrine.uuid_generator')]
     #[ApiProperty(identifier: false)]
+    #[Groups(['article:read'])]
     private ?Uuid $id = null;
 
     #[ORM\Column(length: 255)]
@@ -163,9 +164,11 @@ class Article
     private ?int $childrenCount = null;
 
     #[ORM\Column(nullable: true)]
+    #[Groups(['article:read'])]
     private ?int $descendantCount = null;
 
     #[ORM\Column(nullable: true)]
+    #[Groups(['article:read'])]
     private ?int $level = null;
 
     public function __construct()

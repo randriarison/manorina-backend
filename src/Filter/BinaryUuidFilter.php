@@ -67,6 +67,12 @@ final class BinaryUuidFilter extends AbstractFilter
                 'required' => false,
                 'description' => 'Filter articles by author id',
             ];
+            $description['parentArticle'] = [
+                'property' => 'id',
+                'type' => Type::string(),
+                'required' => false,
+                'description' => 'Filter articles by parent id',
+            ];
             
         } elseif ($resourceClass === "App\Entity\Transaction") {
             $description['transactionProducts.salePrice.onSale.produit'] = [
