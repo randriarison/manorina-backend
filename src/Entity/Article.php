@@ -43,14 +43,16 @@ use App\Filter\BinaryUuidFilter;
         new GetCollection(
             uriTemplate: '/articles',
             security: "true",
-            normalizationContext: ['groups' => ['article:read']]
+            normalizationContext: ['groups' => ['article:read']],
+            order: ['updatedAt' => 'DESC', 'descendantCount' => 'DESC']
         ),
         new GetCollection(
             uriTemplate: '/articles/only-mine',
             security: "is_granted('IS_AUTHENTICATED_REMEMBERED')",
             securityMessage: "You must be authenticated to access your articles.",
             normalizationContext: ['groups' => ['article:read', 'article:details']],
-            provider: \App\State\UserArticlesProvider::class
+            provider: \App\State\UserArticlesProvider::class,
+            order: ['updatedAt' => 'DESC', 'descendantCount' => 'DESC']
         ),
         new Get(
             uriTemplate: '/articles/{slug}',

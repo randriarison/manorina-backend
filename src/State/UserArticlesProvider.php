@@ -45,7 +45,7 @@ class UserArticlesProvider implements ProviderInterface
         // Find articles authored by the current user
         $articles = $this->articleRepository->findBy(
             ['author' => $user],
-            ['createdAt' => 'DESC'], // Order by creation date, newest first
+            ['updatedAt' => 'DESC', 'descendantCount' => 'DESC'], // Order by update date DESC, then descendant count DESC
             $limit,
             $offset
         );
