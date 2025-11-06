@@ -6,6 +6,7 @@ use App\Entity\User;
 use Doctrine\ORM\EntityManagerInterface;
 use KnpU\OAuth2ClientBundle\Client\ClientRegistry;
 use League\OAuth2\Client\Provider\Exception\IdentityProviderException;
+use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -16,7 +17,8 @@ use Symfony\Component\Uid\Uuid;
 class OAuthApiController extends AbstractController
 {
     public function __construct(
-        private EntityManagerInterface $em
+        private EntityManagerInterface $em,
+        private JWTTokenManagerInterface $jwtManager
     ) {}
 
     /**
@@ -99,20 +101,33 @@ class OAuthApiController extends AbstractController
             
             // For testing: check if this is a test code
             if ($data['code'] === 'test_code') {
+                // Find or create a test user for JWT generation
+                $testUser = $this->em->getRepository(User::class)->findOneBy(['email' => 'test@example.com']);
+                if (!$testUser) {
+                    $testUser = new User();
+                    $testUser->setEmail('test@example.com')
+                             ->setGoogleId('test_google_id')
+                             ->setName('Test User');
+                    $this->em->persist($testUser);
+                    $this->em->flush();
+                }
+                
+                // Generate JWT token for test user
+                $jwtToken = $this->jwtManager->create($testUser);
+                
                 return new JsonResponse([
                     'success' => true,
                     'message' => 'Test code received successfully',
                     'test_mode' => true,
                     'user' => [
-                        'id' => 1,
-                        'email' => 'test@example.com',
-                        'name' => 'Test User',
-                        'avatar' => null,
-                        'google_id' => 'test_google_id',
-                        'created_at' => date('Y-m-d H:i:s'),
+                        'id' => $testUser->getId(),
+                        'email' => $testUser->getEmail(),
+                        'name' => $testUser->getName(),
+                        'avatar' => $testUser->getAvatar(),
+                        'google_id' => $testUser->getGoogleId(),
+                        'created_at' => $testUser->getCreatedAt()?->format('Y-m-d H:i:s'),
                     ],
-                    'access_token' => 'test_access_token',
-                    'expires_in' => 3600,
+                    'token' => $jwtToken,
                     'provider' => 'google'
                 ]);
             }
@@ -135,7 +150,10 @@ class OAuthApiController extends AbstractController
             // Create or update user
             $user = $this->getOrCreateUserFromGoogle($userData);
 
-            // Return user data and access token info
+            // Generate JWT token for the user
+            $jwtToken = $this->jwtManager->create($user);
+
+            // Return user data and JWT token
             return new JsonResponse([
                 'success' => true,
                 'user' => [
@@ -146,9 +164,10 @@ class OAuthApiController extends AbstractController
                     'google_id' => $user->getGoogleId(),
                     'created_at' => $user->getCreatedAt()?->format('Y-m-d H:i:s'),
                 ],
-                'access_token' => $accessToken->getToken(),
-                'expires_in' => $accessToken->getExpires() ? $accessToken->getExpires() - time() : null,
-                'provider' => 'google'
+                'token' => $jwtToken,
+                'provider' => 'google',
+                'google_access_token' => $accessToken->getToken(), // Keep Google's token for reference if needed
+                'google_expires_in' => $accessToken->getExpires() ? $accessToken->getExpires() - time() : null,
             ]);
 
         } catch (IdentityProviderException $e) {
@@ -204,7 +223,10 @@ class OAuthApiController extends AbstractController
             // Create or update user
             $user = $this->getOrCreateUserFromFacebook($userData);
 
-            // Return user data and access token info
+            // Generate JWT token for the user
+            $jwtToken = $this->jwtManager->create($user);
+
+            // Return user data and JWT token
             return new JsonResponse([
                 'success' => true,
                 'user' => [
@@ -215,9 +237,10 @@ class OAuthApiController extends AbstractController
                     'facebook_id' => $user->getFacebookId(),
                     'created_at' => $user->getCreatedAt()?->format('Y-m-d H:i:s'),
                 ],
-                'access_token' => $accessToken->getToken(),
-                'expires_in' => $accessToken->getExpires() ? $accessToken->getExpires() - time() : null,
-                'provider' => 'facebook'
+                'token' => $jwtToken,
+                'provider' => 'facebook',
+                'facebook_access_token' => $accessToken->getToken(), // Keep Facebook's token for reference if needed
+                'facebook_expires_in' => $accessToken->getExpires() ? $accessToken->getExpires() - time() : null,
             ]);
 
         } catch (IdentityProviderException $e) {
@@ -254,6 +277,11 @@ class OAuthApiController extends AbstractController
              ->setName($userData['name'] ?? $userData['given_name'] . ' ' . $userData['family_name'] ?? null)
              ->setAvatar($userData['picture'] ?? null);
         
+        // Ensure OAuth users have at least ROLE_USER
+        if (empty($user->getRoles()) || $user->getRoles() === ['ROLE_USER']) {
+            $user->setRoles(['ROLE_USER']);
+        }
+        
         $this->em->persist($user);
         $this->em->flush();
         
@@ -280,6 +308,11 @@ class OAuthApiController extends AbstractController
              ->setFacebookId($facebookId)
              ->setName($userData['name'] ?? null)
              ->setAvatar($userData['picture']['data']['url'] ?? null);
+        
+        // Ensure OAuth users have at least ROLE_USER
+        if (empty($user->getRoles()) || $user->getRoles() === ['ROLE_USER']) {
+            $user->setRoles(['ROLE_USER']);
+        }
         
         $this->em->persist($user);
         $this->em->flush();
