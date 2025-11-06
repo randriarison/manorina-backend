@@ -112,6 +112,10 @@ class OAuthApiController extends AbstractController
                     $this->em->flush();
                 }
                 
+                // Update last login date for test user
+                $testUser->updateLastLogin();
+                $this->em->flush();
+                
                 // Generate JWT token for test user
                 $jwtToken = $this->jwtManager->create($testUser);
                 
@@ -126,6 +130,7 @@ class OAuthApiController extends AbstractController
                         'avatar' => $testUser->getAvatar(),
                         'google_id' => $testUser->getGoogleId(),
                         'created_at' => $testUser->getCreatedAt()?->format('Y-m-d H:i:s'),
+                        'last_login_at' => $testUser->getLastLoginAt()?->format('Y-m-d H:i:s'),
                     ],
                     'token' => $jwtToken,
                     'provider' => 'google'
@@ -150,6 +155,10 @@ class OAuthApiController extends AbstractController
             // Create or update user
             $user = $this->getOrCreateUserFromGoogle($userData);
 
+            // Update last login date
+            $user->updateLastLogin();
+            $this->em->flush();
+
             // Generate JWT token for the user
             $jwtToken = $this->jwtManager->create($user);
 
@@ -163,6 +172,7 @@ class OAuthApiController extends AbstractController
                     'avatar' => $user->getAvatar(),
                     'google_id' => $user->getGoogleId(),
                     'created_at' => $user->getCreatedAt()?->format('Y-m-d H:i:s'),
+                    'last_login_at' => $user->getLastLoginAt()?->format('Y-m-d H:i:s'),
                 ],
                 'token' => $jwtToken,
                 'provider' => 'google',
@@ -223,6 +233,10 @@ class OAuthApiController extends AbstractController
             // Create or update user
             $user = $this->getOrCreateUserFromFacebook($userData);
 
+            // Update last login date
+            $user->updateLastLogin();
+            $this->em->flush();
+
             // Generate JWT token for the user
             $jwtToken = $this->jwtManager->create($user);
 
@@ -236,6 +250,7 @@ class OAuthApiController extends AbstractController
                     'avatar' => $user->getAvatar(),
                     'facebook_id' => $user->getFacebookId(),
                     'created_at' => $user->getCreatedAt()?->format('Y-m-d H:i:s'),
+                    'last_login_at' => $user->getLastLoginAt()?->format('Y-m-d H:i:s'),
                 ],
                 'token' => $jwtToken,
                 'provider' => 'facebook',

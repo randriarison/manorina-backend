@@ -48,3 +48,12 @@ services:
         tags:
             - { name: 'api_platform.filter', id: 'App\Filter\BinaryUuidFilter' }
 
+    # JWT Preprocessor for graceful expired token handling on GET requests
+    App\EventListener\JWTPreprocessor:
+        arguments:
+            $jwtEncoder: '@lexik_jwt_authentication.encoder'
+            $logger: '@logger'
+        tags:
+            - { name: kernel.event_subscriber }
+            - { name: monolog.logger, channel: security }
+
