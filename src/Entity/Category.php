@@ -54,7 +54,8 @@ use ApiPlatform\Doctrine\Orm\Filter\NumericFilter;
             security: "is_granted('ROLE_ADMIN') or object.getAuthor() == user",
             securityMessage: "You can only delete categories you created or if you have admin privileges."
         )
-    ]
+        ],
+        paginationEnabled: false
 )]
 #[ApiFilter(NumericFilter::class, properties: ['level'])]
 class Category
