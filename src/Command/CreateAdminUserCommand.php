@@ -32,7 +32,7 @@ class CreateAdminUserCommand extends Command
         
         // Array of users to create - add new users to this list
         $usersToCreate = [
-            [
+           [
                 'email' => 'onyvoni@gmail.com',
                 'password' => 'ony@man0r1n@',
                 'name' => 'ony'
@@ -42,12 +42,26 @@ class CreateAdminUserCommand extends Command
                 'password' => 'r1v0@admIn123!',
                 'name' => 'Rivo'
             ],
-            // Add more users here as needed:
-            // [
-            //     'email' => 'newadmin@example.com',
-            //     'password' => 'SecurePassword!',
-            //     'name' => 'New Admin'
-            // ],
+            [
+                'email' => 'raaina33@hotmail.com',
+                'password' => 'raAinA!33',
+                'name' => 'Aina'
+            ],
+            [
+                'email' => 'chrisrivony@yahoo.fr',
+                'password' => 'ony@man0r1n@',
+                'name' => 'Christiane'
+            ],
+            [
+                'email' => 'onyrandri@yahoo.fr',
+                'password' => 'ony@man0r1n@',
+                'name' => 'Vero'
+            ],
+            [
+                'email' => 'vonimbero@yahoo.fr',
+                'password' => 'ony@man0r1n@',
+                'name' => 'Vony'
+            ]
         ];
         
         $userRepository = $this->entityManager->getRepository(User::class);
