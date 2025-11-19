@@ -25,6 +25,7 @@ use Symfony\Component\Uid\Uuid;
 use App\Enum\ArticleStatus;
 use App\Validator\CommentMustHaveParent;
 use App\Validator\AnswerMustHaveQuestionParent;
+use App\Validator\ArticleContentValidation;
 use ApiPlatform\Metadata\ApiFilter;
 use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
 use App\Filter\BinaryUuidFilter;
@@ -32,6 +33,7 @@ use App\Filter\BinaryUuidFilter;
 #[ORM\Entity(repositoryClass: ArticleRepository::class)]
 #[CommentMustHaveParent]
 #[AnswerMustHaveQuestionParent]
+#[ArticleContentValidation]
 #[ApiFilter(SearchFilter::class,
     properties: ['category.name' => 'ipartial']
 )]

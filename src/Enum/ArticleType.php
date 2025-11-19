@@ -9,6 +9,7 @@ enum ArticleType: string
     case ANSWER = 'answer';
     case PARAGRAPH = 'paragraph';
     case COMMENT = 'comment';
+    case CHANGE_SUGGESTION = 'change_suggestion';
 
     public function label(): string
     {
@@ -18,6 +19,7 @@ enum ArticleType: string
             self::ANSWER => 'Response',
             self::PARAGRAPH => 'Paragraph',
             self::COMMENT => 'Comment',
+            self::CHANGE_SUGGESTION => 'Suggestion for change',
         };
     }
 }
