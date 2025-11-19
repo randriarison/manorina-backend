@@ -58,17 +58,18 @@ class EntityLifecycleSubscriber implements EventSubscriber
 
         // Handle SluggableTrait
         if (method_exists($entity, 'updateSlug')) {
-            $sourceText = null;
-            if (method_exists($entity, 'getTitle')) {
-                $sourceText = $entity->getTitle();
-            } elseif (method_exists($entity, 'getName')) {
-                $sourceText = $entity->getName();
-            }
+            $sourceText = $this->getSlugSourceText($entity);
             
             if ($sourceText && $this->slugger && $this->entityManager) {
                 $baseSlug = $this->slugger->slug($sourceText)->lower();
                 $uniqueSlug = $this->generateUniqueSlug((string) $baseSlug, get_class($entity));
                 $entity->updateSlug($sourceText, $uniqueSlug);
+            } elseif (!$sourceText && $entity instanceof Article && $this->entityManager) {
+                // Fallback to ID for Articles when no title is available
+                $idSlug = (string) $entity->getId();
+                // Use the ID directly as the slug without further slugging since UUIDs are already URL-safe
+                $uniqueSlug = $this->generateUniqueSlug($idSlug, get_class($entity));
+                $entity->updateSlug($idSlug, $uniqueSlug);
             }
         }
 
@@ -105,7 +106,13 @@ class EntityLifecycleSubscriber implements EventSubscriber
             $sourceText = null;
             $hasChanged = false;
             
-            if (method_exists($entity, 'getTitle') && $args->hasChangedField('title')) {
+            // For Articles, check for title or titleMg changes
+            if ($entity instanceof Article) {
+                if ($args->hasChangedField('title') || $args->hasChangedField('titleMg')) {
+                    $sourceText = $this->getSlugSourceText($entity);
+                    $hasChanged = true;
+                }
+            } elseif (method_exists($entity, 'getTitle') && $args->hasChangedField('title')) {
                 $sourceText = $args->getNewValue('title');
                 $hasChanged = true;
             } elseif (method_exists($entity, 'getName') && $args->hasChangedField('name')) {
@@ -113,10 +120,17 @@ class EntityLifecycleSubscriber implements EventSubscriber
                 $hasChanged = true;
             }
             
-            if ($hasChanged && $sourceText && $this->slugger && $this->entityManager) {
-                $baseSlug = $this->slugger->slug($sourceText)->lower();
-                $uniqueSlug = $this->generateUniqueSlug((string) $baseSlug, get_class($entity));
-                $entity->forceUpdateSlug($uniqueSlug);
+            if ($hasChanged && $this->slugger && $this->entityManager) {
+                if ($sourceText) {
+                    $baseSlug = $this->slugger->slug($sourceText)->lower();
+                    $uniqueSlug = $this->generateUniqueSlug((string) $baseSlug, get_class($entity));
+                    $entity->forceUpdateSlug($uniqueSlug);
+                } elseif ($entity instanceof Article) {
+                    // Fallback to ID for Articles when no title is available
+                    $idSlug = (string) $entity->getId();
+                    $uniqueSlug = $this->generateUniqueSlug($idSlug, get_class($entity));
+                    $entity->forceUpdateSlug($uniqueSlug);
+                }
             }
         }
 
@@ -144,6 +158,34 @@ class EntityLifecycleSubscriber implements EventSubscriber
 
         $user = $token->getUser();
         return $user instanceof User ? $user : null;
+    }
+
+    private function getSlugSourceText($entity): ?string
+    {
+        // For Articles, prioritize title, then titleMg
+        if ($entity instanceof Article) {
+            $title = $entity->getTitle();
+            if ($title && trim($title)) {
+                return $title;
+            }
+            
+            $titleMg = method_exists($entity, 'getTitleMg') ? $entity->getTitleMg() : null;
+            if ($titleMg && trim($titleMg)) {
+                return $titleMg;
+            }
+            
+            // Return null if no valid title is found, will fallback to ID
+            return null;
+        }
+        
+        // For other entities, use existing logic
+        if (method_exists($entity, 'getTitle')) {
+            return $entity->getTitle();
+        } elseif (method_exists($entity, 'getName')) {
+            return $entity->getName();
+        }
+        
+        return null;
     }
 
     private function generateUniqueSlug(string $baseSlug, string $entityClass): string
