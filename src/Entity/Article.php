@@ -119,12 +119,14 @@ class Article
     private ?ArticleStatus $status = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
+    #[Groups(['article:read', 'article:write'])]
     private ?string $contentMg = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     private ?string $contentEn = null;
 
     #[ORM\Column(length: 255, nullable: true)]
+    #[Groups(['article:read', 'article:write'])]
     private ?string $titleMg = null;
 
     #[ORM\Column(length: 255, nullable: true)]
