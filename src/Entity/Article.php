@@ -104,11 +104,11 @@ class Article
     #[Groups(['article:read'])]
     private ?Uuid $id = null;
 
-    #[ORM\Column(length: 255)]
+    #[ORM\Column(length: 255, nullable: true)]
     #[Groups(['article:read', 'article:write'])]
     private ?string $title = null;
 
-    #[ORM\Column(type: Types::TEXT)]
+    #[ORM\Column(type: Types::TEXT, nullable: true)]
     #[Groups(['article:read', 'article:write'])]
     private ?string $content = null;
 
@@ -135,6 +135,7 @@ class Article
     private ?string $titleEn = null;
 
     #[ORM\Column(length: 3, nullable: true)]
+    #[Groups(['article:read', 'article:write'])]
     private ?string $initialLang = null;
 
     #[ORM\ManyToOne(targetEntity: self::class, inversedBy: 'childArticles')]
