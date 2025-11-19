@@ -21,8 +21,10 @@ use App\Entity\Traits\TimestampableTrait;
 use Symfony\Component\Serializer\Annotation\Groups;
 use ApiPlatform\Metadata\ApiFilter;
 use ApiPlatform\Doctrine\Orm\Filter\NumericFilter;
+use App\Validator\CategoryContentValidation;
 
 #[ORM\Entity(repositoryClass: CategoryRepository::class)]
+#[CategoryContentValidation]
 #[ApiResource(
     operations: [
         new GetCollection(
@@ -71,7 +73,7 @@ class Category
     #[Groups(['category:read'])]
     private ?Uuid $id = null;
 
-    #[ORM\Column(length: 255)]
+    #[ORM\Column(length: 255, nullable: true)]
     #[Groups(['category:read', 'category:write', 'article:read'])]
     private ?string $name = null;
 
@@ -101,9 +103,11 @@ class Category
     private ?string $description = null;
 
     #[ORM\Column(length: 255, nullable: true)]
+    #[Groups(['category:read', 'category:write', 'article:read'])]
     private ?string $nameMg = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
+    #[Groups(['category:read', 'category:write'])]
     private ?string $descriptionMg = null;
 
     public function __construct()

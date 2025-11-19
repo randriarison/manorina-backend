@@ -64,8 +64,8 @@ class EntityLifecycleSubscriber implements EventSubscriber
                 $baseSlug = $this->slugger->slug($sourceText)->lower();
                 $uniqueSlug = $this->generateUniqueSlug((string) $baseSlug, get_class($entity));
                 $entity->updateSlug($sourceText, $uniqueSlug);
-            } elseif (!$sourceText && $entity instanceof Article && $this->entityManager) {
-                // Fallback to ID for Articles when no title is available
+            } elseif (!$sourceText && ($entity instanceof Article || $entity instanceof Category) && $this->entityManager) {
+                // Fallback to ID for Articles and Categories when no title/name is available
                 $idSlug = (string) $entity->getId();
                 // Use the ID directly as the slug without further slugging since UUIDs are already URL-safe
                 $uniqueSlug = $this->generateUniqueSlug($idSlug, get_class($entity));
@@ -112,6 +112,12 @@ class EntityLifecycleSubscriber implements EventSubscriber
                     $sourceText = $this->getSlugSourceText($entity);
                     $hasChanged = true;
                 }
+            } elseif ($entity instanceof Category) {
+                // For Categories, check for name or nameMg changes
+                if ($args->hasChangedField('name') || $args->hasChangedField('nameMg')) {
+                    $sourceText = $this->getSlugSourceText($entity);
+                    $hasChanged = true;
+                }
             } elseif (method_exists($entity, 'getTitle') && $args->hasChangedField('title')) {
                 $sourceText = $args->getNewValue('title');
                 $hasChanged = true;
@@ -125,8 +131,8 @@ class EntityLifecycleSubscriber implements EventSubscriber
                     $baseSlug = $this->slugger->slug($sourceText)->lower();
                     $uniqueSlug = $this->generateUniqueSlug((string) $baseSlug, get_class($entity));
                     $entity->forceUpdateSlug($uniqueSlug);
-                } elseif ($entity instanceof Article) {
-                    // Fallback to ID for Articles when no title is available
+                } elseif ($entity instanceof Article || $entity instanceof Category) {
+                    // Fallback to ID for Articles and Categories when no title/name is available
                     $idSlug = (string) $entity->getId();
                     $uniqueSlug = $this->generateUniqueSlug($idSlug, get_class($entity));
                     $entity->forceUpdateSlug($uniqueSlug);
@@ -175,6 +181,22 @@ class EntityLifecycleSubscriber implements EventSubscriber
             }
             
             // Return null if no valid title is found, will fallback to ID
+            return null;
+        }
+        
+        // For Categories, prioritize name, then nameMg
+        if ($entity instanceof Category) {
+            $name = $entity->getName();
+            if ($name && trim($name)) {
+                return $name;
+            }
+            
+            $nameMg = method_exists($entity, 'getNameMg') ? $entity->getNameMg() : null;
+            if ($nameMg && trim($nameMg)) {
+                return $nameMg;
+            }
+            
+            // Return null if no valid name is found, will fallback to ID
             return null;
         }
         
