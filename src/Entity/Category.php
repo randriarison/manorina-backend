@@ -67,10 +67,10 @@ use App\Validator\CategoryContentValidation;
     properties: ['name' => 'ipartial', 'nameMg' => 'ipartial']
 )]
 #[ApiFilter(OrderFilter::class, properties: [
-    'name', 
-    'nameMg',  
-    'level'
-])]
+    'name' => null, 
+    'nameMg' => null,  
+    'level' => null
+], arguments: ['orderParameterName' => 'order'])]
 class Category
 {
     use TimestampableTrait;
