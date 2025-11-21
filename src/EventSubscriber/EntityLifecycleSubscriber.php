@@ -76,6 +76,8 @@ class EntityLifecycleSubscriber implements EventSubscriber
         // Handle Article hierarchy logic
         if ($entity instanceof Article) {
             $this->handleArticleHierarchy($entity);
+            // Synchronize status of child articles with parent
+            $this->synchronizeChildArticlesStatus($entity);
         }
 
         // Handle Category hierarchy logic
@@ -143,6 +145,11 @@ class EntityLifecycleSubscriber implements EventSubscriber
         // Handle Article hierarchy changes
         if ($entity instanceof Article && $args->hasChangedField('parentArticle')) {
             $this->handleArticleHierarchyUpdate($entity, $args);
+        }
+
+        // Handle Article status changes - synchronize with children
+        if ($entity instanceof Article && $args->hasChangedField('status')) {
+            $this->synchronizeChildArticlesStatus($entity);
         }
 
         // Handle Category hierarchy changes
@@ -368,6 +375,26 @@ class EntityLifecycleSubscriber implements EventSubscriber
             
             // Recursively update all descendants
             $this->updateCategoryChildrenHierarchy($child);
+        }
+    }
+
+    /**
+     * Synchronize the status of all child articles with their parent article
+     */
+    private function synchronizeChildArticlesStatus(Article $parentArticle): void
+    {
+        $parentStatus = $parentArticle->getStatus();
+        
+        if ($parentStatus === null) {
+            return; // No status to synchronize
+        }
+
+        foreach ($parentArticle->getChildArticles() as $childArticle) {
+            // Update child status to match parent
+            $childArticle->setStatus($parentStatus);
+            
+            // Recursively update grandchildren if any
+            $this->synchronizeChildArticlesStatus($childArticle);
         }
     }
 }

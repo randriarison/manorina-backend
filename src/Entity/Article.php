@@ -28,6 +28,7 @@ use App\Validator\AnswerMustHaveQuestionParent;
 use App\Validator\ArticleContentValidation;
 use ApiPlatform\Metadata\ApiFilter;
 use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
+use ApiPlatform\Doctrine\Orm\Filter\OrderFilter;
 use App\Filter\BinaryUuidFilter;
 
 #[ORM\Entity(repositoryClass: ArticleRepository::class)]
@@ -40,6 +41,12 @@ use App\Filter\BinaryUuidFilter;
 #[ApiFilter(BinaryUuidFilter::class,
     properties: ['category' => 'exact', 'author' => 'exact', 'parentArticle' => 'exact'], 
 )]
+#[ApiFilter(OrderFilter::class, properties: [
+    'title' => null,
+    'titleMg' => null,
+    'level' => null,
+    'descendantCount' => null,
+], arguments: ['orderParameterName' => 'order'])]
 #[ApiResource(
     operations: [
         new GetCollection(
@@ -145,7 +152,26 @@ class Article
     /**
      * @var Collection<int, self>
      */
-    #[ORM\OneToMany(targetEntity: self::class, mappedBy: 'parentArticle')]
+    #[ORM\OneToMany(targetEntity: self::class, mappedBy: 'parentArticle', cascade: ['persist', 'remove'])]
+    #[Groups(['article:read', 'article:write'])]
+    #[ApiProperty(
+        description: 'Child articles (e.g., paragraphs) belonging to this article',
+        schema: [
+            'type' => 'array',
+            'items' => [
+                'type' => 'object',
+                'properties' => [
+                    'title' => ['type' => 'string', 'description' => 'Article title'],
+                    'titleMg' => ['type' => 'string', 'description' => 'Article title in Malagasy'],
+                    'content' => ['type' => 'string', 'description' => 'Article content'],
+                    'contentMg' => ['type' => 'string', 'description' => 'Article content in Malagasy'],
+                    'articleType' => ['type' => 'string', 'enum' => ['simple', 'article', 'question', 'answer', 'comment', 'paragraph'], 'description' => 'Type of article'],
+                    'status' => ['type' => 'string', 'enum' => ['draft', 'published', 'archived'], 'description' => 'Article status'],
+                    'initialLang' => ['type' => 'string', 'description' => 'Initial language code']
+                ]
+            ]
+        ]
+    )]
     private Collection $childArticles;
 
     #[ORM\Column(enumType: ArticleType::class)]
