@@ -35,7 +35,7 @@ use App\Filter\BinaryUuidFilter;
 #[AnswerMustHaveQuestionParent]
 #[ArticleContentValidation]
 #[ApiFilter(SearchFilter::class,
-    properties: ['category.name' => 'ipartial']
+    properties: ['category.name' => 'ipartial', 'title' => 'ipartial', 'titleMg' => 'ipartial']
 )]
 #[ApiFilter(BinaryUuidFilter::class,
     properties: ['category' => 'exact', 'author' => 'exact', 'parentArticle' => 'exact'], 

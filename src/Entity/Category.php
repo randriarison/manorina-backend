@@ -21,7 +21,10 @@ use App\Entity\Traits\TimestampableTrait;
 use Symfony\Component\Serializer\Annotation\Groups;
 use ApiPlatform\Metadata\ApiFilter;
 use ApiPlatform\Doctrine\Orm\Filter\NumericFilter;
+use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
+use ApiPlatform\Doctrine\Orm\Filter\OrderFilter;
 use App\Validator\CategoryContentValidation;
+
 
 #[ORM\Entity(repositoryClass: CategoryRepository::class)]
 #[CategoryContentValidation]
@@ -60,6 +63,14 @@ use App\Validator\CategoryContentValidation;
         paginationEnabled: false
 )]
 #[ApiFilter(NumericFilter::class, properties: ['level'])]
+#[ApiFilter(SearchFilter::class,
+    properties: ['name' => 'ipartial', 'nameMg' => 'ipartial']
+)]
+#[ApiFilter(OrderFilter::class, properties: [
+    'name', 
+    'nameMg',  
+    'level'
+])]
 class Category
 {
     use TimestampableTrait;
