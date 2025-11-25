@@ -6,6 +6,7 @@ use ApiPlatform\Metadata\ApiProperty;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\Metadata\Link;
 use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Patch;
 use ApiPlatform\Metadata\Delete;
@@ -24,6 +25,7 @@ use ApiPlatform\Doctrine\Orm\Filter\NumericFilter;
 use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
 use ApiPlatform\Doctrine\Orm\Filter\OrderFilter;
 use App\Validator\CategoryContentValidation;
+use App\Enum\CategoryStatus;
 
 
 #[ORM\Entity(repositoryClass: CategoryRepository::class)]
@@ -58,6 +60,28 @@ use App\Validator\CategoryContentValidation;
             uriTemplate: '/categories/{slug}',
             security: "is_granted('ROLE_ADMIN') or object.getAuthor() == user",
             securityMessage: "You can only delete categories you created or if you have admin privileges."
+        ),
+        new Patch(
+            uriTemplate: '/categories/{id}/publish',
+            uriVariables: [
+                'id' => new Link(fromClass: Category::class, identifiers: ['id'], parameterName: 'id')
+            ],
+            security: "is_granted('ROLE_MODERATOR')",
+            securityMessage: "You must have moderator privileges to publish categories.",
+            processor: \App\State\CategoryPublishProcessor::class,
+            deserialize: false,
+            normalizationContext: ['groups' => ['category:read']]
+        ),
+        new Patch(
+            uriTemplate: '/categories/{id}/archive',
+            uriVariables: [
+                'id' => new Link(fromClass: Category::class, identifiers: ['id'], parameterName: 'id')
+            ],
+            security: "is_granted('ROLE_MODERATOR')",
+            securityMessage: "You must have moderator privileges to archive categories.",
+            processor: \App\State\CategoryArchiveProcessor::class,
+            deserialize: false,
+            normalizationContext: ['groups' => ['category:read']]
         )
         ],
         paginationEnabled: false
@@ -120,6 +144,10 @@ class Category
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     #[Groups(['category:read', 'category:write'])]
     private ?string $descriptionMg = null;
+
+    #[ORM\Column(type: 'string', enumType: CategoryStatus::class, length: 25, options: ['default' => 'draft'])]
+    #[Groups(['category:read', 'category:write'])]
+    private CategoryStatus $status = CategoryStatus::DRAFT;
 
     public function __construct()
     {
@@ -257,6 +285,18 @@ class Category
     public function setDescriptionMg(?string $descriptionMg): static
     {
         $this->descriptionMg = $descriptionMg;
+
+        return $this;
+    }
+
+    public function getStatus(): CategoryStatus
+    {
+        return $this->status;
+    }
+
+    public function setStatus(CategoryStatus $status): static
+    {
+        $this->status = $status;
 
         return $this;
     }

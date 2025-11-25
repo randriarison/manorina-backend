@@ -5,6 +5,7 @@ namespace App\Security\Voter;
 use App\Entity\Article;
 use App\Entity\User;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
+use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 use Symfony\Component\Security\Core\Authorization\Voter\Voter;
 
 class ArticleVoter extends Voter
@@ -13,6 +14,11 @@ class ArticleVoter extends Voter
     public const EDIT_STATUS = 'ARTICLE_EDIT_STATUS';
     public const VIEW = 'ARTICLE_VIEW';
     public const DELETE = 'ARTICLE_DELETE';
+
+    public function __construct(
+        private AuthorizationCheckerInterface $authorizationChecker
+    ) {
+    }
 
     protected function supports(string $attribute, mixed $subject): bool
     {
@@ -62,7 +68,7 @@ class ArticleVoter extends Voter
         }
 
         // Moderators and above (including admins) can edit status of any article
-        return in_array('ROLE_MODERATOR', $user->getRoles());
+        return $this->authorizationChecker->isGranted('ROLE_MODERATOR');
     }
 
     private function canDelete(Article $article, User $user): bool
@@ -73,7 +79,7 @@ class ArticleVoter extends Voter
         }
 
         // Only admins can delete other users' articles (moderators cannot)
-        return in_array('ROLE_ADMIN', $user->getRoles());
+        return $this->authorizationChecker->isGranted('ROLE_ADMIN');
     }
 
     private function canView(Article $article, ?User $user): bool
@@ -94,6 +100,6 @@ class ArticleVoter extends Voter
         }
 
         // Moderators and above (including admins) can view all articles
-        return in_array('ROLE_MODERATOR', $user->getRoles());
+        return $this->authorizationChecker->isGranted('ROLE_MODERATOR');
     }
 }

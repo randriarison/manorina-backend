@@ -419,26 +419,26 @@ class EntityLifecycleSubscriber implements EventSubscriber
             return;
         }
 
+        // Get status values safely (handle both enum objects and strings)
+        $newStatusValue = $this->getStatusValue($newStatus);
+        $oldStatusValue = $this->getStatusValue($oldStatus);
+
         // Handle status change to PUBLISHED
-        if ($newStatus && $newStatus->value === 'published' && 
-            (!$oldStatus || $oldStatus->value !== 'published')) {
-            
+        if ($newStatusValue === 'published' && $oldStatusValue !== 'published') {
             $entity->setPublishedAt(new \DateTimeImmutable());
             if ($currentUser) {
                 $entity->setPublishedBy($currentUser);
             }
             
             // Clear archived fields if coming from archived status
-            if ($oldStatus && $oldStatus->value === 'archived') {
+            if ($oldStatusValue === 'archived') {
                 $entity->setArchivedAt(null);
                 $entity->setArchivedBy(null);
             }
         }
 
         // Handle status change to ARCHIVED
-        if ($newStatus && $newStatus->value === 'archived' && 
-            (!$oldStatus || $oldStatus->value !== 'archived')) {
-            
+        if ($newStatusValue === 'archived' && $oldStatusValue !== 'archived') {
             $entity->setArchivedAt(new \DateTimeImmutable());
             if ($currentUser) {
                 $entity->setArchivedBy($currentUser);
@@ -446,17 +446,39 @@ class EntityLifecycleSubscriber implements EventSubscriber
         }
 
         // Handle status change from PUBLISHED/ARCHIVED to DRAFT
-        if ($newStatus && $newStatus->value === 'draft') {
-            if ($oldStatus && $oldStatus->value === 'published') {
+        if ($newStatusValue === 'draft') {
+            if ($oldStatusValue === 'published') {
                 // Clear published fields when moving to draft
                 $entity->setPublishedAt(null);
                 $entity->setPublishedBy(null);
             }
-            if ($oldStatus && $oldStatus->value === 'archived') {
+            if ($oldStatusValue === 'archived') {
                 // Clear archived fields when moving to draft
                 $entity->setArchivedAt(null);
                 $entity->setArchivedBy(null);
             }
         }
+    }
+
+    /**
+     * Safely get the status value from either an enum object or string
+     */
+    private function getStatusValue($status): ?string
+    {
+        if ($status === null) {
+            return null;
+        }
+        
+        // If it's an enum object, get the value property
+        if (is_object($status) && property_exists($status, 'value')) {
+            return $status->value;
+        }
+        
+        // If it's already a string, return it
+        if (is_string($status)) {
+            return $status;
+        }
+        
+        return null;
     }
 }

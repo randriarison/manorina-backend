@@ -95,6 +95,28 @@ use App\Filter\BinaryUuidFilter;
             ],
             security: "is_granted('ARTICLE_DELETE', object)",
             securityMessage: "You can only delete articles you created or if you have moderator privileges."
+        ),
+        new Patch(
+            uriTemplate: '/articles/{id}/publish',
+            uriVariables: [
+                'id' => new Link(fromClass: Article::class, identifiers: ['id'], parameterName: 'id')
+            ],
+            security: "is_granted('ARTICLE_EDIT_STATUS', object)",
+            securityMessage: "You can only publish articles you created or if you have moderator privileges.",
+            processor: \App\State\ArticlePublishProcessor::class,
+            deserialize: false,
+            normalizationContext: ['groups' => ['article:read', 'article:details']]
+        ),
+        new Patch(
+            uriTemplate: '/articles/{id}/archive',
+            uriVariables: [
+                'id' => new Link(fromClass: Article::class, identifiers: ['id'], parameterName: 'id')
+            ],
+            security: "is_granted('ARTICLE_EDIT_STATUS', object)",
+            securityMessage: "You can only archive articles you created or if you have moderator privileges.",
+            processor: \App\State\ArticleArchiveProcessor::class,
+            deserialize: false,
+            normalizationContext: ['groups' => ['article:read', 'article:details']]
         )
     ]
 )]
