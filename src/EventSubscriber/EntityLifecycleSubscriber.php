@@ -150,6 +150,12 @@ class EntityLifecycleSubscriber implements EventSubscriber
         // Handle Article status changes - synchronize with children
         if ($entity instanceof Article && $args->hasChangedField('status')) {
             $this->synchronizeChildArticlesStatus($entity);
+            $this->handleStatusChange($entity, $args);
+        }
+
+        // Handle Category status changes (if Category has status field)
+        if ($entity instanceof Category && $args->hasChangedField('status')) {
+            $this->handleStatusChange($entity, $args);
         }
 
         // Handle Category hierarchy changes
@@ -395,6 +401,62 @@ class EntityLifecycleSubscriber implements EventSubscriber
             
             // Recursively update grandchildren if any
             $this->synchronizeChildArticlesStatus($childArticle);
+        }
+    }
+
+    /**
+     * Handle status changes to track publication and archival dates/users
+     */
+    private function handleStatusChange($entity, PreUpdateEventArgs $args): void
+    {
+        $currentUser = $this->getCurrentUser();
+        $newStatus = $args->getNewValue('status');
+        $oldStatus = $args->getOldValue('status');
+
+        // Check if entity has the required methods (uses TimestampableTrait and BlameableTrait)
+        if (!method_exists($entity, 'setPublishedAt') || !method_exists($entity, 'setPublishedBy') ||
+            !method_exists($entity, 'setArchivedAt') || !method_exists($entity, 'setArchivedBy')) {
+            return;
+        }
+
+        // Handle status change to PUBLISHED
+        if ($newStatus && $newStatus->value === 'published' && 
+            (!$oldStatus || $oldStatus->value !== 'published')) {
+            
+            $entity->setPublishedAt(new \DateTimeImmutable());
+            if ($currentUser) {
+                $entity->setPublishedBy($currentUser);
+            }
+            
+            // Clear archived fields if coming from archived status
+            if ($oldStatus && $oldStatus->value === 'archived') {
+                $entity->setArchivedAt(null);
+                $entity->setArchivedBy(null);
+            }
+        }
+
+        // Handle status change to ARCHIVED
+        if ($newStatus && $newStatus->value === 'archived' && 
+            (!$oldStatus || $oldStatus->value !== 'archived')) {
+            
+            $entity->setArchivedAt(new \DateTimeImmutable());
+            if ($currentUser) {
+                $entity->setArchivedBy($currentUser);
+            }
+        }
+
+        // Handle status change from PUBLISHED/ARCHIVED to DRAFT
+        if ($newStatus && $newStatus->value === 'draft') {
+            if ($oldStatus && $oldStatus->value === 'published') {
+                // Clear published fields when moving to draft
+                $entity->setPublishedAt(null);
+                $entity->setPublishedBy(null);
+            }
+            if ($oldStatus && $oldStatus->value === 'archived') {
+                // Clear archived fields when moving to draft
+                $entity->setArchivedAt(null);
+                $entity->setArchivedBy(null);
+            }
         }
     }
 }

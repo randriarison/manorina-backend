@@ -17,6 +17,14 @@ trait BlameableTrait
     #[Groups(['article:details'])]
     private ?User $updatedBy = null;
 
+    #[ORM\ManyToOne(targetEntity: User::class)]
+    #[Groups(['article:read', 'article:details'])]
+    private ?User $publishedBy = null;
+
+    #[ORM\ManyToOne(targetEntity: User::class)]
+    #[Groups(['article:read', 'article:details'])]
+    private ?User $archivedBy = null;
+
     public function getAuthor(): User
     {
         return $this->author;
@@ -37,6 +45,30 @@ trait BlameableTrait
     public function setUpdatedBy(?User $updatedBy): static
     {
         $this->updatedBy = $updatedBy;
+
+        return $this;
+    }
+
+    public function getPublishedBy(): ?User
+    {
+        return $this->publishedBy;
+    }
+
+    public function setPublishedBy(?User $publishedBy): static
+    {
+        $this->publishedBy = $publishedBy;
+
+        return $this;
+    }
+
+    public function getArchivedBy(): ?User
+    {
+        return $this->archivedBy;
+    }
+
+    public function setArchivedBy(?User $archivedBy): static
+    {
+        $this->archivedBy = $archivedBy;
 
         return $this;
     }

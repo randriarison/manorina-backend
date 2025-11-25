@@ -15,6 +15,14 @@ trait TimestampableTrait
     #[Groups(['article:read', 'article:details'])]
     private ?\DateTimeImmutable $updatedAt = null;
 
+    #[ORM\Column(nullable: true)]
+    #[Groups(['article:read', 'article:details'])]
+    private ?\DateTimeImmutable $publishedAt = null;
+
+    #[ORM\Column(nullable: true)]
+    #[Groups(['article:read', 'article:details'])]
+    private ?\DateTimeImmutable $archivedAt = null;
+
     public function getCreatedAt(): ?\DateTimeImmutable
     {
         return $this->createdAt;
@@ -35,6 +43,30 @@ trait TimestampableTrait
     public function setUpdatedAt(?\DateTimeImmutable $updatedAt): static
     {
         $this->updatedAt = $updatedAt;
+
+        return $this;
+    }
+
+    public function getPublishedAt(): ?\DateTimeImmutable
+    {
+        return $this->publishedAt;
+    }
+
+    public function setPublishedAt(?\DateTimeImmutable $publishedAt): static
+    {
+        $this->publishedAt = $publishedAt;
+
+        return $this;
+    }
+
+    public function getArchivedAt(): ?\DateTimeImmutable
+    {
+        return $this->archivedAt;
+    }
+
+    public function setArchivedAt(?\DateTimeImmutable $archivedAt): static
+    {
+        $this->archivedAt = $archivedAt;
 
         return $this;
     }
