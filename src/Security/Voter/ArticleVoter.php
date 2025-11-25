@@ -10,33 +10,39 @@ use Symfony\Component\Security\Core\Authorization\Voter\Voter;
 class ArticleVoter extends Voter
 {
     public const EDIT = 'ARTICLE_EDIT';
+    public const EDIT_STATUS = 'ARTICLE_EDIT_STATUS';
     public const VIEW = 'ARTICLE_VIEW';
     public const DELETE = 'ARTICLE_DELETE';
 
     protected function supports(string $attribute, mixed $subject): bool
     {
-        return in_array($attribute, [self::EDIT, self::VIEW, self::DELETE])
+        return in_array($attribute, [self::EDIT, self::EDIT_STATUS, self::VIEW, self::DELETE])
             && $subject instanceof Article;
     }
 
     protected function voteOnAttribute(string $attribute, mixed $subject, TokenInterface $token): bool
     {
         $user = $token->getUser();
+        /** @var Article $article */
+        $article = $subject;
 
-        // If the user is not authenticated, deny access
+        // Special handling for VIEW - allow unauthenticated users to view published articles
+        if ($attribute === self::VIEW) {
+            return $this->canView($article, $user instanceof User ? $user : null);
+        }
+
+        // For all other operations, user must be authenticated
         if (!$user instanceof User) {
             return false;
         }
 
-        /** @var Article $article */
-        $article = $subject;
-
         switch ($attribute) {
             case self::EDIT:
-            case self::DELETE:
                 return $this->canEdit($article, $user);
-            case self::VIEW:
-                return $this->canView($article, $user);
+            case self::EDIT_STATUS:
+                return $this->canEditStatus($article, $user);
+            case self::DELETE:
+                return $this->canDelete($article, $user);
         }
 
         return false;
@@ -44,21 +50,50 @@ class ArticleVoter extends Voter
 
     private function canEdit(Article $article, User $user): bool
     {
-        // User can edit if they are the original author
+        // Only the author can edit their own article (full edit access)
+        return $article->getAuthor() === $user;
+    }
+
+    private function canEditStatus(Article $article, User $user): bool
+    {
+        // User can edit status if they are the original author
         if ($article->getAuthor() === $user) {
             return true;
         }
 
-        // Or if they have moderator/admin role
-        return in_array('ROLE_MODERATOR', $user->getRoles()) 
-            || in_array('ROLE_ADMIN', $user->getRoles());
+        // Moderators and above (including admins) can edit status of any article
+        return in_array('ROLE_MODERATOR', $user->getRoles());
     }
 
-    private function canView(Article $article, User $user): bool
+    private function canDelete(Article $article, User $user): bool
     {
-        // For now, all authenticated users can view articles
-        // You can modify this based on your business logic
-        // For example, check if article is published or if user is author
-        return true;
+        // User can delete if they are the original author
+        if ($article->getAuthor() === $user) {
+            return true;
+        }
+
+        // Only admins can delete other users' articles (moderators cannot)
+        return in_array('ROLE_ADMIN', $user->getRoles());
+    }
+
+    private function canView(Article $article, ?User $user): bool
+    {
+        // Published articles can be viewed by anyone (including unauthenticated users)
+        if ($article->getStatus() && $article->getStatus()->value === 'published') {
+            return true;
+        }
+
+        // For non-published articles, user must be authenticated
+        if (!$user instanceof User) {
+            return false;
+        }
+
+        // Authors can always view their own articles regardless of status
+        if ($article->getAuthor() === $user) {
+            return true;
+        }
+
+        // Moderators and above (including admins) can view all articles
+        return in_array('ROLE_MODERATOR', $user->getRoles());
     }
 }

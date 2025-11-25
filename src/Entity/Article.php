@@ -68,7 +68,7 @@ use App\Filter\BinaryUuidFilter;
             uriVariables: [
                 'slug' => new Link(fromClass: Article::class, identifiers: ['slug'], parameterName: 'slug')
             ],
-            security: "true",
+            security: "is_granted('ARTICLE_VIEW', object)",
             normalizationContext: ['groups' => ['article:read', 'article:details']]
         ),
         new Post(
