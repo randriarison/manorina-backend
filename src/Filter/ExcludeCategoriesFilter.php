@@ -6,7 +6,7 @@ use ApiPlatform\Doctrine\Orm\Filter\AbstractFilter;
 use ApiPlatform\Doctrine\Orm\Util\QueryNameGeneratorInterface;
 use ApiPlatform\Metadata\Operation;
 use Doctrine\ORM\QueryBuilder;
-use Symfony\Component\PropertyInfo\Type;
+use Symfony\Component\TypeInfo\Type;
 use Symfony\Component\Uid\Uuid;
 
 final class ExcludeCategoriesFilter extends AbstractFilter
@@ -81,7 +81,7 @@ final class ExcludeCategoriesFilter extends AbstractFilter
         return [
             'excludeCategories' => [
                 'property' => 'excludeCategories',
-                'type' => Type::BUILTIN_TYPE_ARRAY,
+                'type' => 'array',
                 'required' => false,
                 'description' => 'Exclude articles that belong to any of the specified category IDs. Can be a single ID or an array of IDs.',
                 'openapi' => [
