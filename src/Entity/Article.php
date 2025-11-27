@@ -30,6 +30,7 @@ use ApiPlatform\Metadata\ApiFilter;
 use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
 use ApiPlatform\Doctrine\Orm\Filter\OrderFilter;
 use App\Filter\BinaryUuidFilter;
+use App\Filter\ExcludeCategoriesFilter;
 
 #[ORM\Entity(repositoryClass: ArticleRepository::class)]
 #[CommentMustHaveParent]
@@ -47,6 +48,7 @@ use App\Filter\BinaryUuidFilter;
     'level' => null,
     'descendantCount' => null,
 ], arguments: ['orderParameterName' => 'order'])]
+#[ApiFilter(\App\Filter\ExcludeCategoriesFilter::class)]
 #[ApiResource(
     operations: [
         new GetCollection(

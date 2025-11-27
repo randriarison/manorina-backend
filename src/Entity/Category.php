@@ -105,7 +105,7 @@ class Category
     #[ORM\GeneratedValue(strategy: 'CUSTOM')]
     #[ORM\CustomIdGenerator(class: 'doctrine.uuid_generator')]
     #[ApiProperty(identifier: false)]
-    #[Groups(['category:read'])]
+    #[Groups(['category:read', 'article:read'])]
     private ?Uuid $id = null;
 
     #[ORM\Column(length: 255, nullable: true)]
