@@ -32,6 +32,9 @@ final class OpenApiFactory implements OpenApiFactoryInterface
         $paths->addPath('/api/oauth/facebook/callback', $this->createFacebookCallbackPath());
         $paths->addPath('/api/me', $this->createLegacyMePath());
 
+        // Add Search endpoint
+        $paths->addPath('/api/search', $this->createSearchPath());
+
         // Add security schemes
         $components = $openApi->getComponents();
         $securitySchemes = $components?->getSecuritySchemes() ?: new \ArrayObject();
@@ -336,6 +339,62 @@ final class OpenApiFactory implements OpenApiFactoryInterface
                 description: 'Returns 401 with helpful message in stateless mode. Use OAuth callback data instead.',
                 responses: [
                     '401' => new Model\Response(description: 'User not authenticated in stateless mode')
+                ]
+            )
+        );
+    }
+
+    private function createSearchPath(): Model\PathItem
+    {
+        return new Model\PathItem(
+            summary: 'Search Articles and Categories',
+            get: new Model\Operation(
+                operationId: 'search',
+                tags: ['Search'],
+                summary: 'Search articles and categories',
+                description: 'Search for articles and categories by name, title, or content. Excludes draft and archived items. No authentication required.',
+                security: [], // Override global security - no JWT required
+                parameters: [
+                    new Model\Parameter(
+                        name: 'q',
+                        in: 'query',
+                        required: true,
+                        description: 'Search query (one or more words to search in articles and categories)',
+                        schema: [
+                            'type' => 'string',
+                            'example' => 'programming tutorial'
+                        ]
+                    )
+                ],
+                responses: [
+                    '200' => new Model\Response(
+                        description: 'Search results',
+                        content: new \ArrayObject([
+                            'application/json' => new Model\MediaType(
+                                schema: new \ArrayObject([
+                                    'type' => 'object',
+                                    'properties' => [
+                                        'articles' => [
+                                            'type' => 'array',
+                                            'description' => 'Array of matching articles',
+                                            'items' => ['$ref' => '#/components/schemas/Article']
+                                        ],
+                                        'categories' => [
+                                            'type' => 'array',
+                                            'description' => 'Array of matching categories',
+                                            'items' => ['$ref' => '#/components/schemas/Category']
+                                        ],
+                                        'total' => [
+                                            'type' => 'integer',
+                                            'description' => 'Total number of results',
+                                            'example' => 15
+                                        ]
+                                    ]
+                                ])
+                            )
+                        ])
+                    ),
+                    '400' => new Model\Response(description: 'Invalid search query')
                 ]
             )
         );
