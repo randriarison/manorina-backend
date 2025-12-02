@@ -59,9 +59,10 @@ class SearchController extends AbstractController
         $qb->select('a')
            ->from(Article::class, 'a')
            ->leftJoin('a.category', 'c')
-           ->where('a.status != :archivedStatus AND a.status != :draftStatus')
+           ->where('a.status != :archivedStatus AND a.status != :draftStatus AND a.articleType != :commentType')
            ->setParameter('archivedStatus', 'archived')
-           ->setParameter('draftStatus', 'draft');
+           ->setParameter('draftStatus', 'draft')
+           ->setParameter('commentType', 'comment');
 
         $conditions = [];
         $parameters = [];
