@@ -71,7 +71,8 @@ class SearchController extends AbstractController
             $conditions[] = $qb->expr()->orX(
                 $qb->expr()->like('LOWER(a.title)', ':' . $paramName),
                 $qb->expr()->like('LOWER(a.titleMg)', ':' . $paramName),
-                $qb->expr()->like('LOWER(c.name)', ':' . $paramName)
+                $qb->expr()->like('LOWER(c.name)', ':' . $paramName),
+                $qb->expr()->like('LOWER(c.nameMg)', ':' . $paramName)
             );
             $parameters[$paramName] = '%' . strtolower($term) . '%';
         }
