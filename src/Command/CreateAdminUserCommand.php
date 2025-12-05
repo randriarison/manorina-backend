@@ -108,6 +108,11 @@ class CreateAdminUserCommand extends Command
                 'email' => 'tatianah.Andriana@gmail.com',
                 'password' => 'T4t1@nAh',
                 'name' => 'Tatianah'
+            ],
+            [
+                'email' => 'serge27raoni@yahoo.fr',
+                'password' => 'S3rg27@!',
+                'name' => 'TatianahSergo'
             ]
 
         ];

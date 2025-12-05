@@ -58,7 +58,7 @@ use App\Enum\CategoryStatus;
         ),
         new Delete(
             uriTemplate: '/categories/{slug}',
-            security: "is_granted('ROLE_MODERATOR') or object.getAuthor() == user",
+            security: "is_granted('ROLE_ADMIN') or object.getAuthor() == user",
             securityMessage: "You can only delete categories you created or if you have admin privileges."
         ),
         new Patch(
