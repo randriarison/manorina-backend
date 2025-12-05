@@ -71,6 +71,43 @@ class CreateAdminUserCommand extends Command
                 'email' => 'mihossiraman@gmail.com',
                 'password' => 'm1h0ssI&',
                 'name' => 'Olivah'
+            ],
+            [
+                'email' => 'mahalisoa.berhault@gmail.com',
+                'password' => 'Mah4L!s0',
+                'name' => 'Mah'
+
+            ],
+            [
+                'email' => 'nanouh.rasamoely@gmail.com',
+                'password' => 'N4n0uh@2',
+                'name' => 'Noro'
+
+            ],
+            [
+                'email' => 'parfait.andry@gmail.com',
+                'password' => 'P4rf@it7',
+                'name' => 'Andry'
+            ],
+            [
+                'email' => 'ioty.rabarone@gmail.com',
+                'password' => 'I0ty*R3b',
+                'name' => 'IMR'
+            ],
+            [
+                'email' => 'herininahary@gmail.com',
+                'password' => 'H3r1n!H4',
+                'name' => 'Hery'
+            ],
+            [
+                'email' => 'm.rakotonj@gmail.com',
+                'password' => 'M*R4k0t9',
+                'name' => 'Mickaël'
+            ],
+            [
+                'email' => 'tatianah.Andriana@gmail.com',
+                'password' => 'T4t1@nAh',
+                'name' => 'Tatianah'
             ]
 
         ];
@@ -104,7 +141,7 @@ class CreateAdminUserCommand extends Command
                 $user = new User();
                 $user->setEmail($email);
                 $user->setName($name);
-                $user->setRoles(['ROLE_ADMIN']);
+                $user->setRoles(['ROLE_MODERATOR']);
                 $user->setIsEmailVerified(true); // Admin user should be verified
                 $user->setEmailVerifiedAt(new \DateTimeImmutable());
                 

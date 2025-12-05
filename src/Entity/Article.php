@@ -176,7 +176,7 @@ class Article
     /**
      * @var Collection<int, self>
      */
-    #[ORM\OneToMany(targetEntity: self::class, mappedBy: 'parentArticle', cascade: ['persist', 'remove'])]
+    #[ORM\OneToMany(targetEntity: self::class, mappedBy: 'parentArticle', cascade: ['persist'])]
     #[Groups(['article:read', 'article:write'])]
     #[ApiProperty(
         description: 'Child articles (e.g., paragraphs) belonging to this article',

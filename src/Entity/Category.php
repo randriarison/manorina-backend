@@ -51,14 +51,14 @@ use App\Enum\CategoryStatus;
         ),
         new Patch(
             uriTemplate: '/categories/{slug}',
-            security: "is_granted('ROLE_ADMIN') or object.getAuthor() == user",
+            security: "is_granted('ROLE_MODERATOR') or object.getAuthor() == user",
             securityMessage: "You can only edit categories you created or if you have admin privileges.",
             denormalizationContext: ['groups' => ['category:write']],
             normalizationContext: ['groups' => ['category:read']]
         ),
         new Delete(
             uriTemplate: '/categories/{slug}',
-            security: "is_granted('ROLE_ADMIN') or object.getAuthor() == user",
+            security: "is_granted('ROLE_MODERATOR') or object.getAuthor() == user",
             securityMessage: "You can only delete categories you created or if you have admin privileges."
         ),
         new Patch(
