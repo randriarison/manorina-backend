@@ -128,7 +128,23 @@ class CreateAdminUserCommand extends Command
                 'email' => 'brabemanantsoa61@gmail.com',
                 'password' => 'Br4b3M@61',
                 'name' => 'Benja'
-            ]
+            ],
+            [
+                'email' => 'romeorakotomanga@gmail.com',
+                'password' => 'R0m30@2021',
+                'name' => 'Romeo'
+            ],
+            [
+                'email' => 'aovpm31@gmail.com',
+                'password' => 'A0vP@ssw0rd31',
+                'name' => 'Association Observatoire de la Vie Publique de Madagascar'
+            ],
+            [
+                'email' => 'fanirisoa.zazaravaka@grmail.com',
+                'password' => 'Le@FanZ2024',
+                'name' => 'Léa'
+            ],
+            
 
         ];
         
