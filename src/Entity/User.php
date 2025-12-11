@@ -10,22 +10,57 @@ use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Serializer\Annotation\Groups;
 use ApiPlatform\Metadata\ApiResource;
+use  ApiPlatform\Metadata\Delete;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\Metadata\Patch;
+use ApiPlatform\Metadata\Post;
 use Symfony\Component\Uid\Uuid;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_EMAIL', fields: ['email'])]
-#[ApiResource]
+#[ApiResource(
+    operations: [
+        new GetCollection(
+            uriTemplate: '/users',
+            security: "is_granted('ROLE_ADMIN')",
+            normalizationContext: ['groups' => ['user:read']]
+        ),
+        new Get(
+            uriTemplate: '/users/{id}',
+            security: "is_granted('ROLE_ADMIN')",
+            normalizationContext: ['groups' => ['article:read', 'article:details', 'category:read', 'user:read']]
+        ),
+        new Post(
+            uriTemplate: '/users',
+           security: "is_granted('ROLE_ADMIN')",
+            denormalizationContext: ['groups' => ['user:write']],
+            normalizationContext: ['groups' => ['user:read',]]
+        ),
+        new Patch(
+            uriTemplate: '/users/{id}',
+            security: "is_granted('ROLE_ADMIN')",
+            denormalizationContext: ['groups' => ['user:write']],
+            normalizationContext: ['groups' => ['user:read']]
+        ),
+        new Delete(
+            uriTemplate: '/users/{id}',
+            security: "is_granted('ROLE_ADMIN')",
+            securityMessage: "You can only delete if you have admin privileges."
+        ),
+    ]
+)]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
     #[ORM\Id]
     #[ORM\Column(type: 'uuid', unique: true)]
     #[ORM\GeneratedValue(strategy: 'CUSTOM')]
     #[ORM\CustomIdGenerator(class: 'doctrine.uuid_generator')]
-    #[Groups(['article:read', 'article:details'])]
+    #[Groups(['article:read', 'article:details', 'user:read'])]
     private ?Uuid $id = null;
 
     #[ORM\Column(length: 180)]
-    #[Groups(['article:read', 'article:details'])]
+    #[Groups(['article:read', 'article:details', 'user:read', 'user:write'])]
     private ?string $email = null;
 
     /**
@@ -38,19 +73,23 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      * @var string The hashed password
      */
     #[ORM\Column(nullable: true)]
+    #[Groups(['user:write'])]
     private ?string $password = null;
 
     #[ORM\Column(nullable: true)]
+     #[Groups(['user:write'])]
     private ?string $googleId = null;
 
     #[ORM\Column(nullable: true)]
+     #[Groups(['user:write'])]
     private ?string $facebookId = null;
 
     #[ORM\Column(length: 255, nullable: true)]
-    #[Groups(['article:read', 'article:details'])]
+   #[Groups(['article:read', 'article:details', 'user:read', 'user:write'])]
     private ?string $name = null;
 
     #[ORM\Column(length: 255, nullable: true)]
+    #[Groups(['article:read', 'article:details', 'user:read', 'user:write'])]
     private ?string $avatar = null;
 
     #[ORM\Column(type: 'datetime_immutable', nullable: true)]
