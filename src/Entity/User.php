@@ -24,7 +24,7 @@ use Symfony\Component\Uid\Uuid;
         new GetCollection(
             uriTemplate: '/users',
             security: "is_granted('ROLE_ADMIN')",
-            normalizationContext: ['groups' => ['user:read']]
+            normalizationContext: ['groups' => ['user:admin-read']]
         ),
         new Get(
             uriTemplate: '/users/{id}',
@@ -33,13 +33,15 @@ use Symfony\Component\Uid\Uuid;
         ),
         new Post(
             uriTemplate: '/users',
-           security: "is_granted('ROLE_ADMIN')",
+            security: "is_granted('ROLE_ADMIN')",
+            processor: \App\State\UserProcessor::class,
             denormalizationContext: ['groups' => ['user:write']],
-            normalizationContext: ['groups' => ['user:read',]]
+            normalizationContext: ['groups' => ['user:read']]
         ),
         new Patch(
             uriTemplate: '/users/{id}',
             security: "is_granted('ROLE_ADMIN')",
+            processor: \App\State\UserProcessor::class,
             denormalizationContext: ['groups' => ['user:write']],
             normalizationContext: ['groups' => ['user:read']]
         ),
@@ -56,17 +58,18 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(type: 'uuid', unique: true)]
     #[ORM\GeneratedValue(strategy: 'CUSTOM')]
     #[ORM\CustomIdGenerator(class: 'doctrine.uuid_generator')]
-    #[Groups(['article:read', 'article:details', 'user:read'])]
+    #[Groups(['article:read', 'article:details', 'user:read', 'user:admin-read'])]
     private ?Uuid $id = null;
 
     #[ORM\Column(length: 180)]
-    #[Groups(['article:read', 'article:details', 'user:read', 'user:write'])]
+    #[Groups(['article:read', 'article:details', 'user:read', 'user:write', 'user:admin-read'])]
     private ?string $email = null;
 
     /**
      * @var list<string> The user roles
      */
     #[ORM\Column]
+    #[Groups(['user:admin-read', 'user:write'])]
     private array $roles = [];
 
     /**
@@ -85,11 +88,11 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?string $facebookId = null;
 
     #[ORM\Column(length: 255, nullable: true)]
-   #[Groups(['article:read', 'article:details', 'user:read', 'user:write'])]
+   #[Groups(['article:read', 'article:details', 'user:read', 'user:write', 'user:admin-read'])]
     private ?string $name = null;
 
     #[ORM\Column(length: 255, nullable: true)]
-    #[Groups(['article:read', 'article:details', 'user:read', 'user:write'])]
+    #[Groups(['article:read', 'article:details', 'user:read', 'user:write', 'user:admin-read'])]
     private ?string $avatar = null;
 
     #[ORM\Column(type: 'datetime_immutable', nullable: true)]
@@ -99,6 +102,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?\DateTimeImmutable $updatedAt = null;
 
     #[ORM\Column(type: 'datetime_immutable', nullable: true)]
+    #[Groups(['user:admin-read'])]
     private ?\DateTimeImmutable $lastLoginAt = null;
 
     #[ORM\Column(type: 'datetime_immutable', nullable: true)]

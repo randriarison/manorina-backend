@@ -57,3 +57,8 @@ services:
             - { name: kernel.event_subscriber }
             - { name: monolog.logger, channel: security }
 
+    # User processor for password hashing and role defaults
+    App\State\UserProcessor:
+        arguments:
+            $decoratedProcessor: '@api_platform.doctrine.orm.state.persist_processor'
+
