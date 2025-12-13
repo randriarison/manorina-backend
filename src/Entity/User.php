@@ -50,6 +50,13 @@ use Symfony\Component\Uid\Uuid;
             security: "is_granted('ROLE_ADMIN')",
             securityMessage: "You can only delete if you have admin privileges."
         ),
+        new Patch(
+            uriTemplate: '/users/{id}/change-password',
+            security: "is_granted('ROLE_USER')",
+            processor: \App\State\UserChangePasswordProcessor::class,
+            denormalizationContext: ['groups' => ['user:change-password']],
+            normalizationContext: ['groups' => ['user:read']]
+        ),
     ]
 )]
 class User implements UserInterface, PasswordAuthenticatedUserInterface

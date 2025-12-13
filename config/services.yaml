@@ -61,4 +61,12 @@ services:
     App\State\UserProcessor:
         arguments:
             $decoratedProcessor: '@api_platform.doctrine.orm.state.persist_processor'
+    
+    # User change password processor for secure password changes
+    App\State\UserChangePasswordProcessor:
+        arguments:
+            $entityManager: '@doctrine.orm.entity_manager'
+            $passwordHasher: '@security.user_password_hasher'
+            $security: '@security.helper'
+            $requestStack: '@request_stack'
 
