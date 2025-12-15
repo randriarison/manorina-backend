@@ -12,7 +12,11 @@ use Doctrine\Common\EventSubscriber;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Event\PrePersistEventArgs;
 use Doctrine\ORM\Event\PreUpdateEventArgs;
+use Doctrine\ORM\Event\PostPersistEventArgs;
+use Doctrine\ORM\Event\PostUpdateEventArgs;
+use Doctrine\ORM\Event\PostRemoveEventArgs;
 use Doctrine\ORM\Events;
+use App\Enum\ArticleStatus;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use Symfony\Component\String\Slugger\SluggerInterface;
 
@@ -29,6 +33,9 @@ class EntityLifecycleSubscriber implements EventSubscriber
         return [
             Events::prePersist,
             Events::preUpdate,
+            Events::postPersist,
+            Events::postUpdate,
+            Events::postRemove,
         ];
     }
 
@@ -480,5 +487,90 @@ class EntityLifecycleSubscriber implements EventSubscriber
         }
         
         return null;
+    }
+
+    /**
+     * Handle entity persistence - update user counters when articles are created
+     */
+    public function postPersist(PostPersistEventArgs $args): void
+    {
+        $entity = $args->getObject();
+
+        // Update user article counters when an article is persisted
+        if ($entity instanceof Article) {
+            $this->updateUserArticleCounters($entity->getAuthor());
+        }
+    }
+
+    /**
+     * Handle entity updates - update user counters when articles are modified
+     */
+    public function postUpdate(PostUpdateEventArgs $args): void
+    {
+        $entity = $args->getObject();
+
+        // Update user article counters when an article is updated
+        if ($entity instanceof Article) {
+            $this->updateUserArticleCounters($entity->getAuthor());
+        }
+    }
+
+    /**
+     * Handle entity removal - update user counters when articles are deleted
+     */
+    public function postRemove(PostRemoveEventArgs $args): void
+    {
+        $entity = $args->getObject();
+
+        // Update user article counters when an article is removed
+        if ($entity instanceof Article) {
+            $this->updateUserArticleCounters($entity->getAuthor());
+        }
+    }
+
+    /**
+     * Update the user's article counters based on their articles' statuses
+     */
+    private function updateUserArticleCounters(User $user): void
+    {
+        if (!$this->entityManager) {
+            return;
+        }
+
+        // Calculate the counts directly from the database to ensure accuracy
+        $draftCount = $this->countUserArticlesByStatus($user, ArticleStatus::DRAFT);
+        $publishedCount = $this->countUserArticlesByStatus($user, ArticleStatus::PUBLISHED);
+
+        // Update the user's counters
+        $user->setNbDraftArticles($draftCount);
+        $user->setNbPublishedArticles($publishedCount);
+
+        // Persist the user entity to save the updated counters
+        $this->entityManager->persist($user);
+    }
+
+    /**
+     * Count articles for a user by status
+     */
+    private function countUserArticlesByStatus(User $user, ArticleStatus $status): int
+    {
+        if (!$this->entityManager) {
+            return 0;
+        }
+
+        try {
+            $qb = $this->entityManager->createQueryBuilder();
+            $qb->select('COUNT(a.id)')
+                ->from(Article::class, 'a')
+                ->where('a.author = :user')
+                ->andWhere('a.status = :status')
+                ->setParameter('user', $user)
+                ->setParameter('status', $status);
+
+            return (int) $qb->getQuery()->getSingleScalarResult();
+        } catch (\Exception $e) {
+            // In case of error, return 0 to avoid breaking the application
+            return 0;
+        }
     }
 }

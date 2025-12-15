@@ -29,8 +29,7 @@ services:
         arguments:
             $entityManager: '@doctrine.orm.entity_manager'
         tags:
-            - { name: doctrine.event_listener, event: prePersist }
-            - { name: doctrine.event_listener, event: preUpdate }
+            - { name: doctrine.event_subscriber }
     
     # Article slug URI variable transformer
     App\State\ArticleSlugUriVariableTransformer:

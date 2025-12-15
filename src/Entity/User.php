@@ -133,6 +133,14 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToMany(targetEntity: Article::class, mappedBy: 'author')]
     private Collection $articles;
 
+    #[ORM\Column(nullable: true)]
+    #[Groups(['user:admin-read'])]
+    private ?int $nbDraftArticles = null;
+
+    #[ORM\Column(nullable: true)]
+    #[Groups(['user:admin-read'])]
+    private ?int $nbPublishedArticles = null;
+
     public function __construct()
     {
         $this->createdAt = new \DateTimeImmutable();
@@ -419,6 +427,30 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
             // Note: We don't set author to null as articles must always have an author
             // If you need to transfer articles to another user, use setAuthor() explicitly
         }
+
+        return $this;
+    }
+
+    public function getNbDraftArticles(): ?int
+    {
+        return $this->nbDraftArticles;
+    }
+
+    public function setNbDraftArticles(?int $nbDraftArticles): static
+    {
+        $this->nbDraftArticles = $nbDraftArticles;
+
+        return $this;
+    }
+
+    public function getNbPublishedArticles(): ?int
+    {
+        return $this->nbPublishedArticles;
+    }
+
+    public function setNbPublishedArticles(?int $nbPublishedArticles): static
+    {
+        $this->nbPublishedArticles = $nbPublishedArticles;
 
         return $this;
     }
