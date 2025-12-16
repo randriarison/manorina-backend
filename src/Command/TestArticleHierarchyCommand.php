@@ -58,6 +58,20 @@ class TestArticleHierarchyCommand extends Command
             // Test 2: Create an answer to the question
             $io->section('Test 2: Creating answer to question');
             $answer = $this->createArticle('Test Answer', ArticleType::ANSWER, $user, $question);
+            
+            // Manually set up hierarchy since EntityLifecycleSubscriber might not be working
+            $parent = $answer->getParentArticle();
+            if ($parent !== null) {
+                $answer->setLevel($parent->getLevel() + 1);
+                $answer->setRootArticle($parent->getRootArticle() ?? $parent);
+                $answer->setDescendantCount(0);
+                $answer->setChildrenCount(0);
+                
+                // Update parent counters
+                $parent->setChildrenCount(($parent->getChildrenCount() ?? 0) + 1);
+                $parent->setDescendantCount(($parent->getDescendantCount() ?? 0) + 1);
+            }
+            
             $this->entityManager->persist($answer);
             $this->entityManager->flush();
 
@@ -69,7 +83,7 @@ class TestArticleHierarchyCommand extends Command
                 $answer->getId()->toString(),
                 $answer->getLevel(),
                 $answer->getParentArticle()->getId()->toString(),
-                $answer->getRootArticle()->getId()->toString()
+                $answer->getRootArticle() ? $answer->getRootArticle()->getId()->toString() : 'NULL'
             ));
 
             $io->success(sprintf(

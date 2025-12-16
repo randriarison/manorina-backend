@@ -285,16 +285,29 @@ class EntityLifecycleSubscriber implements EventSubscriber
 
     private function updateParentCounters(Article $parent, int $descendantIncrement): void
     {
-        // Increment parent's children count
+        // Increment parent's direct children count (only for immediate parent)
         $parent->setChildrenCount(($parent->getChildrenCount() ?? 0) + 1);
         
         // Increment parent's descendant count by the increment value
         $parent->setDescendantCount(($parent->getDescendantCount() ?? 0) + $descendantIncrement);
 
-        // Propagate the descendant count up the hierarchy
+        // Propagate the descendant count up the hierarchy (but NOT the children count)
         $grandParent = $parent->getParentArticle();
         if ($grandParent !== null) {
-            $this->updateParentCounters($grandParent, $descendantIncrement);
+            // Only propagate descendant count, not children count
+            $this->propagateDescendantCount($grandParent, $descendantIncrement);
+        }
+    }
+
+    private function propagateDescendantCount(Article $ancestor, int $descendantIncrement): void
+    {
+        // Only increment descendant count for ancestors (not children count)
+        $ancestor->setDescendantCount(($ancestor->getDescendantCount() ?? 0) + $descendantIncrement);
+
+        // Continue propagating up the hierarchy
+        $parent = $ancestor->getParentArticle();
+        if ($parent !== null) {
+            $this->propagateDescendantCount($parent, $descendantIncrement);
         }
     }
 
@@ -331,16 +344,29 @@ class EntityLifecycleSubscriber implements EventSubscriber
 
     private function decreaseParentCounters(Article $parent, int $descendantDecrement): void
     {
-        // Decrease parent's children count
+        // Decrease parent's direct children count (only for immediate parent)
         $parent->setChildrenCount(max(0, ($parent->getChildrenCount() ?? 0) - 1));
         
         // Decrease parent's descendant count by the decrement value
         $parent->setDescendantCount(max(0, ($parent->getDescendantCount() ?? 0) - $descendantDecrement));
 
-        // Propagate the descendant count decrease up the hierarchy
+        // Propagate the descendant count decrease up the hierarchy (but NOT the children count)
         $grandParent = $parent->getParentArticle();
         if ($grandParent !== null) {
-            $this->decreaseParentCounters($grandParent, $descendantDecrement);
+            // Only propagate descendant count decrease, not children count decrease
+            $this->propagateDescendantCountDecrease($grandParent, $descendantDecrement);
+        }
+    }
+
+    private function propagateDescendantCountDecrease(Article $ancestor, int $descendantDecrement): void
+    {
+        // Only decrease descendant count for ancestors (not children count)
+        $ancestor->setDescendantCount(max(0, ($ancestor->getDescendantCount() ?? 0) - $descendantDecrement));
+
+        // Continue propagating up the hierarchy
+        $parent = $ancestor->getParentArticle();
+        if ($parent !== null) {
+            $this->propagateDescendantCountDecrease($parent, $descendantDecrement);
         }
     }
 

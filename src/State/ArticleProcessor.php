@@ -36,8 +36,67 @@ class ArticleProcessor implements ProcessorInterface
                     $data->setAuthor($user);
                 }
             }
+
+            // Handle article hierarchy if this is a new article with a parent
+            // This is needed because EntityLifecycleSubscriber might not be working properly
+            if (!$data->getId() && $data->getParentArticle()) {
+                $this->setupArticleHierarchy($data);
+            }
         }
 
         return $this->persistProcessor->process($data, $operation, $uriVariables, $context);
+    }
+
+    private function setupArticleHierarchy(Article $article): void
+    {
+        $parent = $article->getParentArticle();
+
+        if ($parent === null) {
+            // This is a root article
+            $article->setLevel(0);
+            $article->setRootArticle(null);
+            $article->setDescendantCount(0);
+        } else {
+            // This article has a parent
+            $article->setLevel($parent->getLevel() + 1);
+            $article->setRootArticle($parent->getRootArticle() ?? $parent);
+            $article->setDescendantCount(0);
+
+            // Update parent's counters
+            $this->updateParentCounters($parent, 1);
+        }
+
+        // Initialize childrenCount to 0 for new articles
+        if ($article->getChildrenCount() === null) {
+            $article->setChildrenCount(0);
+        }
+    }
+
+    private function updateParentCounters(Article $parent, int $descendantIncrement): void
+    {
+        // Increment parent's direct children count (only for immediate parent)
+        $parent->setChildrenCount(($parent->getChildrenCount() ?? 0) + 1);
+        
+        // Increment parent's descendant count by the increment value
+        $parent->setDescendantCount(($parent->getDescendantCount() ?? 0) + $descendantIncrement);
+
+        // Propagate the descendant count up the hierarchy (but NOT the children count)
+        $grandParent = $parent->getParentArticle();
+        if ($grandParent !== null) {
+            // Only propagate descendant count, not children count
+            $this->propagateDescendantCount($grandParent, $descendantIncrement);
+        }
+    }
+
+    private function propagateDescendantCount(Article $ancestor, int $descendantIncrement): void
+    {
+        // Only increment descendant count for ancestors (not children count)
+        $ancestor->setDescendantCount(($ancestor->getDescendantCount() ?? 0) + $descendantIncrement);
+
+        // Continue propagating up the hierarchy
+        $parent = $ancestor->getParentArticle();
+        if ($parent !== null) {
+            $this->propagateDescendantCount($parent, $descendantIncrement);
+        }
     }
 }
