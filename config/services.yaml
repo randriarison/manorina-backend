@@ -27,6 +27,8 @@ services:
     # Entity lifecycle event subscriber
     App\EventSubscriber\EntityLifecycleSubscriber:
         arguments:
+            $tokenStorage: '@security.token_storage'
+            $slugger: '@slugger'
             $entityManager: '@doctrine.orm.entity_manager'
         tags:
             - { name: doctrine.event_subscriber }

@@ -77,6 +77,7 @@ use App\Filter\ExcludeCategoriesFilter;
             uriTemplate: '/articles',
             security: "is_granted('IS_AUTHENTICATED_REMEMBERED')",
             securityMessage: "You must be authenticated to create articles.",
+            processor: \App\State\ArticleProcessor::class,
             denormalizationContext: ['groups' => ['article:write']],
             normalizationContext: ['groups' => ['article:read', 'article:details']]
         ),
@@ -202,10 +203,7 @@ class Article
     #[Groups(['article:read', 'article:write'])]
     private ?ArticleType $articleType = null;
 
-    #[ORM\ManyToOne(targetEntity: User::class, inversedBy: 'articles')]
-    #[ORM\JoinColumn(nullable: false)]
-    #[Groups(['article:read', 'article:details'])]
-    private User $author;
+
 
     /**
      * @var Collection<int, Category>
@@ -232,6 +230,13 @@ class Article
     {
         $this->childArticles = new ArrayCollection();
         $this->category = new ArrayCollection();
+        
+        // Initialize timestamps to prevent null constraint violations
+        $this->initializeTimestamps();
+        
+        // Initialize temporary slug to prevent null constraint violations
+        // The EntityLifecycleSubscriber will update this with the proper slug
+        $this->slug = 'temp-' . uniqid();
     }
 
     public function getId(): ?Uuid
