@@ -164,6 +164,16 @@ class CreateAdminUserCommand extends Command
                 'password' => 'Iar!v3l0',
                 'name' => 'Mialy'
             ],
+             [
+                'email' => 'concertation.diaspora@gmail.com',
+                'password' => 'C0nc3rt@t10n!2',
+                'name' => 'Concertation'
+            ],
+             [
+                'email' => 'vaoarivelo@gmail.com',
+                'password' => 'V@0r1v3l0-16',
+                'name' => 'Vao'
+            ],
         ];
         
         $userRepository = $this->entityManager->getRepository(User::class);
