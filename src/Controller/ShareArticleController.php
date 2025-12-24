@@ -17,7 +17,6 @@ class ShareArticleController extends AbstractController
     ): Response {
         /** @var Article  $article */
         $article = $articleRepository->find($id);
-        dump($article);
         if (!$article) {
             throw $this->createNotFoundException();
         }
