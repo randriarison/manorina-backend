@@ -268,7 +268,20 @@ class Article
         return $this;
     }
 
-
+    public function getExcerpt(): ?string
+    {
+        if ($this->content === null || trim($this->content) === '') {
+            return null;
+        }
+        
+        $words = preg_split('/\s+/', trim($this->content));
+        
+        if (count($words) <= 25) {
+            return $this->content;
+        }
+        
+        return implode(' ', array_slice($words, 0, 25)) . '...';
+    }
 
     public function getPublishedAt(): ?\DateTimeImmutable
     {
