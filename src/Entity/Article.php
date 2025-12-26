@@ -226,6 +226,10 @@ class Article
     #[Groups(['article:read'])]
     private ?int $level = null;
 
+    #[ORM\Column(type: Types::TEXT, nullable: true)]
+    #[Groups(['article:write', 'article:details'])]
+    private ?string $draftContent = null;
+
     public function __construct()
     {
         $this->childArticles = new ArrayCollection();
@@ -498,6 +502,18 @@ class Article
     {
         $this->level = $level;
         // Note: Child level updates are handled by EntityLifecycleSubscriber
+        return $this;
+    }
+
+    public function getDraftContent(): ?string
+    {
+        return $this->draftContent;
+    }
+
+    public function setDraftContent(?string $draftContent): static
+    {
+        $this->draftContent = $draftContent;
+
         return $this;
     }
 
