@@ -270,14 +270,19 @@ class Article
 
     public function getExcerpt(): ?string
     {
-        if ($this->content === null || trim($this->content) === '') {
+        $content = $this->content;
+        if ($content === null || trim($content) === '') {
+            $content = $this->contentMg;
+        }
+        
+        if ($content === null || trim($content) === '') {
             return null;
         }
         
-        $words = preg_split('/\s+/', trim($this->content));
+        $words = preg_split('/\s+/', trim($content));
         
         if (count($words) <= 25) {
-            return $this->content;
+            return $content;
         }
         
         return implode(' ', array_slice($words, 0, 25)) . '...';

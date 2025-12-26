@@ -23,8 +23,8 @@ class ShareArticleController extends AbstractController
 
         // For comments, use the root article's title
         $title = $article->getArticleType() === \App\Enum\ArticleType::COMMENT && $article->getRootArticle()
-            ? $article->getRootArticle()->getTitle()
-            : $article->getTitle();
+            ? ($article->getRootArticle()->getTitle() ?: $article->getRootArticle()->getTitleMg())
+            : ($article->getTitle() ?: $article->getTitleMg());
 
         return $this->render('share/article.html.twig', [
             'title' => $title,

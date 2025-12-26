@@ -17,7 +17,7 @@
     {# <meta name="twitter:card" content="summary_large_image"> #}
     <meta name="twitter:title" content="{{ title }}">
 
-    {# Redirect real users #}
+    {# Redirect real users  #}
     <script>
         window.location.href = "{{ redirectUrl }}";
     </script>
@@ -26,5 +26,11 @@
     <noscript>
         <a href="{{ redirectUrl }}">Continue</a>
     </noscript>
+    <h1>{{ title }}</h1>
+    <div>
+        {% autoescape %}
+        {{ description|raw }}
+        {% endautoescape %}
+    </div>
 </body>
 </html>
