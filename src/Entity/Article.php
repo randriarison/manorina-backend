@@ -21,6 +21,7 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Annotation\Groups;
+use Symfony\Component\Serializer\Annotation\MaxDepth;
 use Symfony\Component\Uid\Uuid;
 use App\Enum\ArticleStatus;
 use App\Validator\CommentMustHaveParent;
@@ -172,6 +173,7 @@ class Article
 
     #[ORM\ManyToOne(targetEntity: self::class, inversedBy: 'childArticles')]
     #[Groups(['article:read', 'article:write'])]
+    #[MaxDepth(1)]
     private ?self $parentArticle = null;
 
     /**
@@ -179,6 +181,7 @@ class Article
      */
     #[ORM\OneToMany(targetEntity: self::class, mappedBy: 'parentArticle', cascade: ['persist'])]
     #[Groups(['article:read', 'article:write'])]
+    #[MaxDepth(1)]
     #[ApiProperty(
         description: 'Child articles (e.g., paragraphs) belonging to this article',
         schema: [
@@ -227,8 +230,16 @@ class Article
     private ?int $level = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
-    #[Groups(['article:write', 'article:details'])]
+    #[Groups(['article:write'])]
     private ?string $draftContent = null;
+
+    #[ORM\Column(type: Types::TEXT, nullable: true)]
+    #[Groups(['article:write'])]
+    private ?string $draftContentMg = null;
+
+    #[ORM\Column(type: Types::TEXT, nullable: true)]
+    #[Groups(['article:write'])]
+    private ?string $draftContentEn = null;
 
     public function __construct()
     {
@@ -516,6 +527,31 @@ class Article
 
         return $this;
     }
+
+    public function getDraftContentMg(): ?string
+    {
+        return $this->draftContentMg;
+    }
+
+    public function setDraftContentMg(?string $draftContentMg): static
+    {
+        $this->draftContentMg = $draftContentMg;
+
+        return $this;
+    }
+
+    public function getDraftContentEn(): ?string
+    {
+        return $this->draftContentEn;
+    }
+
+    public function setDraftContentEn(?string $draftContentEn): static
+    {
+        $this->draftContentEn = $draftContentEn;
+
+        return $this;
+    }
+
 
 
 }

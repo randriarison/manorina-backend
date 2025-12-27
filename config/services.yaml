@@ -71,3 +71,9 @@ services:
             $security: '@security.helper'
             $requestStack: '@request_stack'
 
+    # Article owner context builder to pass current user for ownership checks
+    App\Serializer\ArticleOwnerContextBuilder:
+        decorates: 'api_platform.serializer.context_builder'
+        arguments:
+            $decorated: '@.inner'
+            $security: '@security.helper'
