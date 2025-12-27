@@ -89,6 +89,7 @@ use App\Filter\ExcludeCategoriesFilter;
             ],
             security: "is_granted('ARTICLE_EDIT', object)",
             securityMessage: "You can only edit articles you created or if you have moderator privileges.",
+            processor: \App\State\ArticlePatchProcessor::class,
             denormalizationContext: ['groups' => ['article:write']],
             normalizationContext: ['groups' => ['article:read', 'article:details']]
         ),
@@ -240,6 +241,10 @@ class Article
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     #[Groups(['article:write'])]
     private ?string $draftContentEn = null;
+
+    #[ORM\Column(nullable: true)]
+    #[Groups(['article:read'])]
+    private ?\DateTime $saveDraftTime = null;
 
     public function __construct()
     {
@@ -548,6 +553,18 @@ class Article
     public function setDraftContentEn(?string $draftContentEn): static
     {
         $this->draftContentEn = $draftContentEn;
+
+        return $this;
+    }
+
+    public function getSaveDraftTime(): ?\DateTime
+    {
+        return $this->saveDraftTime;
+    }
+
+    public function setSaveDraftTime(?\DateTime $saveDraftTime): static
+    {
+        $this->saveDraftTime = $saveDraftTime;
 
         return $this;
     }
