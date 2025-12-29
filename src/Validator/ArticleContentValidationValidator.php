@@ -64,12 +64,16 @@ class ArticleContentValidationValidator extends ConstraintValidator
     private function validateContentFields(Article $article, ArticleContentValidation $constraint): void
     {
         $content = $article->getContent();
+        $draftContent = $article->getDraftContent();
         $contentMg = $article->getContentMg();
+        $draftContentMg = $article->getDraftContentMg();
         
         $isContentValid = $this->isFieldValid($content);
+        $isDraftContentValid = $this->isFieldValid($draftContent);
         $isContentMgValid = $this->isFieldValid($contentMg);
+        $isDraftContentMgValid = $this->isFieldValid($draftContentMg);
         
-        if (!$isContentValid && !$isContentMgValid) {
+        if (!$isContentValid && !$isDraftContentValid && !$isContentMgValid && !$isDraftContentMgValid) {
             $this->context->buildViolation($constraint->contentRequiredMessage)
                 ->atPath('content')
                 ->addViolation();

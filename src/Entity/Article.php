@@ -83,9 +83,9 @@ use App\Filter\ExcludeCategoriesFilter;
             normalizationContext: ['groups' => ['article:read', 'article:details']]
         ),
         new Patch(
-            uriTemplate: '/articles/{slug}',
+            uriTemplate: '/articles/{id}',
             uriVariables: [
-                'slug' => new Link(fromClass: Article::class, identifiers: ['slug'], parameterName: 'slug')
+                'id' => new Link(fromClass: Article::class, identifiers: ['id'], parameterName: 'id')
             ],
             security: "is_granted('ARTICLE_EDIT', object)",
             securityMessage: "You can only edit articles you created or if you have moderator privileges.",
