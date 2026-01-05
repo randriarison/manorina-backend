@@ -25,6 +25,9 @@ class ArticlePatchProcessor implements ProcessorInterface
     public function process(mixed $data, Operation $operation, array $uriVariables = [], array $context = []): mixed
     {
         if ($data instanceof Article) {
+            // Handle childArticles updates
+            $this->handleChildArticlesUpdate($data);
+            
             // Get the original entity data from UnitOfWork before the changes
             $uow = $this->entityManager->getUnitOfWork();
             $originalData = $uow->getOriginalEntityData($data);
@@ -116,5 +119,61 @@ class ArticlePatchProcessor implements ProcessorInterface
         }
         
         return (int) $qb->getQuery()->getSingleScalarResult() > 0;
+    }
+    
+    /**
+     * Handle updates to existing childArticles
+     */
+    private function handleChildArticlesUpdate(Article $article): void
+    {
+        foreach ($article->getChildArticles() as $childArticle) {
+            // If the child has an ID, it's an existing entity that needs to be merged
+            if ($childArticle->getId() !== null) {
+                dump('Merging child article ID: ' . $childArticle->getId());
+                // Fetch the managed entity from the database
+                $managedChild = $this->entityManager->find(Article::class, $childArticle->getId());
+                
+                if ($managedChild) {
+                    // Update the properties of the managed entity
+                    if ($childArticle->getTitle() !== null) {
+                        $managedChild->setTitle($childArticle->getTitle());
+                    }
+                    if ($childArticle->getTitleMg() !== null) {
+                        $managedChild->setTitleMg($childArticle->getTitleMg());
+                    }
+                    if ($childArticle->getContent() !== null) {
+                        $managedChild->setContent($childArticle->getContent());
+                    }
+                    if ($childArticle->getContentMg() !== null) {
+                        $managedChild->setContentMg($childArticle->getContentMg());
+                    }
+                    if ($childArticle->getArticleType() !== null) {
+                        $managedChild->setArticleType($childArticle->getArticleType());
+                    }
+                    if ($childArticle->getStatus() !== null) {
+                        $managedChild->setStatus($childArticle->getStatus());
+                    }
+                    if ($childArticle->getInitialLang() !== null) {
+                        $managedChild->setInitialLang($childArticle->getInitialLang());
+                    }
+                    
+                    // Handle draft content fields
+                    if ($childArticle->getDraftContent() !== null) {
+                        $managedChild->setDraftContent($childArticle->getDraftContent());
+                    }
+                    if ($childArticle->getDraftContentMg() !== null) {
+                        $managedChild->setDraftContentMg($childArticle->getDraftContentMg());
+                    }
+                    if ($childArticle->getDraftContentEn() !== null) {
+                        $managedChild->setDraftContentEn($childArticle->getDraftContentEn());
+                    }
+                    
+                    // Ensure parent relationship is maintained
+                    if ($managedChild->getParentArticle() !== $article) {
+                        $managedChild->setParentArticle($article);
+                    }
+                }
+            }
+        }
     }
 }

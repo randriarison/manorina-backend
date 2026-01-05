@@ -420,6 +420,7 @@ class Article
         if (!$this->childArticles->contains($childArticle)) {
             $this->childArticles->add($childArticle);
             $childArticle->setParentArticle($this);
+            $childArticle->setAuthor($this->getAuthor());
         }
 
         return $this;
