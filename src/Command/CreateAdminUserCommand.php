@@ -169,10 +169,20 @@ class CreateAdminUserCommand extends Command
                 'password' => 'C0nc3rt@t10n!2',
                 'name' => 'Concertation'
             ],
-             [
+            [
                 'email' => 'vaoarivelo@gmail.com',
                 'password' => 'V@0r1v3l0-16',
                 'name' => 'Vao'
+            ],
+            [
+                'email' => 'nlaza23@yahoo.fr',
+                'password' => 'Nl4zY@2023',
+                'name' => ' Laza Nomenjanahary'
+            ],
+            [
+                'email' => 'hery-rakoto@orange.fr',
+                'password' => 'H3rY!R@k0t',
+                'name' => 'Hery Rakoto'
             ],
         ];
         
