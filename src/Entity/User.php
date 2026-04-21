@@ -33,9 +33,9 @@ use Symfony\Component\Uid\Uuid;
         ),
         new Post(
             uriTemplate: '/users',
-            security: "is_granted('ROLE_ADMIN')",
             processor: \App\State\UserProcessor::class,
-            denormalizationContext: ['groups' => ['user:write']],
+            security: "is_granted('PUBLIC_ACCESS')", 
+            denormalizationContext: ['groups' => ['user:add']],
             normalizationContext: ['groups' => ['user:read']]
         ),
         new Patch(
@@ -69,7 +69,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?Uuid $id = null;
 
     #[ORM\Column(length: 180)]
-    #[Groups(['article:read', 'article:details', 'user:read', 'user:write', 'user:admin-read'])]
+    #[Groups(['article:read', 'article:details', 'user:read', 'user:write', 'user:add', 'user:admin-read'])]
     private ?string $email = null;
 
     /**

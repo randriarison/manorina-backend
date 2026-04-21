@@ -191,6 +191,85 @@ class AuthController extends AbstractController
     }
 
     /**
+     * Create Password with Verification Token
+     */
+    #[Route('/create-password', name: 'create_password', methods: ['POST'])]
+    public function createPassword(Request $request): JsonResponse
+    {
+        try {
+            $data = json_decode($request->getContent(), true);
+            $token = $data['token'] ?? null;
+            $password = $data['password'] ?? null;
+
+            if (!$token || !$password) {
+                return new JsonResponse([
+                    'error' => 'Missing fields',
+                    'message' => 'Token and password are required'
+                ], 400);
+            }
+
+            $user = $this->em->getRepository(User::class)->findOneBy([
+                'emailVerificationToken' => $token
+            ]);
+
+            if (!$user) {
+                return new JsonResponse([
+                    'error' => 'Invalid token',
+                    'message' => 'Invalid or expired verification token'
+                ], 400);
+            }
+
+            if ($user->isEmailVerified() && $user->getPassword()) {
+                return new JsonResponse([
+                    'error' => 'Already completed',
+                    'message' => 'Account setup is already complete'
+                ], 400);
+            }
+
+            // Validate password strength
+            if (!$this->isPasswordStrong($password)) {
+                return new JsonResponse([
+                    'error' => 'Weak password',
+                    'message' => 'Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character'
+                ], 400);
+            }
+
+            // Hash and set password
+            $hashedPassword = $this->passwordHasher->hashPassword($user, $password);
+            $user->setPassword($hashedPassword);
+            
+            // Mark email as verified
+            $user->markEmailAsVerified();
+            $user->updateTimestamps();
+
+            $this->em->flush();
+
+            // Generate JWT token for automatic login
+            $jwtToken = $this->jwtManager->create($user);
+
+            return new JsonResponse([
+                'success' => true,
+                'message' => 'Password created and email verified successfully',
+                'token' => $jwtToken,
+                'user' => [
+                    'id' => $user->getId(),
+                    'email' => $user->getEmail(),
+                    'name' => $user->getName(),
+                    'email_verified' => true,
+                    'email_verified_at' => $user->getEmailVerifiedAt()?->format('Y-m-d H:i:s'),
+                    'roles' => $user->getRoles()
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            return new JsonResponse([
+                'error' => 'Password creation failed',
+                'message' => 'An error occurred while creating your password'
+            ], 500);
+        }
+    }
+
+    /**
      * User Login
      */
     #[Route('/login', name: 'login', methods: ['POST'])]

@@ -81,6 +81,7 @@ security:
          - { path: ^/api/articles/.+$, methods: [GET], roles: PUBLIC_ACCESS }
          - { path: ^/api/categories$, methods: [GET], roles: PUBLIC_ACCESS }
          - { path: ^/api/categories/.+$, methods: [GET], roles: PUBLIC_ACCESS }
+         - { path: ^/api/users$, methods: [POST], roles: PUBLIC_ACCESS }
          - { path: ^/api/me, roles: ROLE_USER }
          - { path: ^/api, roles: ROLE_USER }
          - { path: ^/admin, roles: ROLE_ADMIN }

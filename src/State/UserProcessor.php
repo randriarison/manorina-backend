@@ -5,6 +5,7 @@ namespace App\State;
 use ApiPlatform\Metadata\Operation;
 use ApiPlatform\State\ProcessorInterface;
 use App\Entity\User;
+use App\Service\EmailService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
@@ -13,7 +14,8 @@ class UserProcessor implements ProcessorInterface
     public function __construct(
         private EntityManagerInterface $entityManager,
         private UserPasswordHasherInterface $passwordHasher,
-        private ProcessorInterface $decoratedProcessor
+        private ProcessorInterface $decoratedProcessor,
+        private EmailService $emailService
     ) {
     }
 
@@ -22,6 +24,8 @@ class UserProcessor implements ProcessorInterface
         /** @var User $user */
         $user = $data;
         
+        $isNewUser = $operation instanceof \ApiPlatform\Metadata\Post;
+        
         // Hash password if provided and it's not already hashed
         if ($user->getPassword() && !$this->isPasswordHashed($user->getPassword())) {
             $hashedPassword = $this->passwordHasher->hashPassword($user, $user->getPassword());
@@ -29,7 +33,7 @@ class UserProcessor implements ProcessorInterface
         }
         
         // Set default role if no roles are provided (only for POST operations)
-        if ($operation instanceof \ApiPlatform\Metadata\Post) {
+        if ($isNewUser) {
             if (empty($user->getRoles()) || $user->getRoles() === ['ROLE_USER']) {
                 // If getRoles() returns ['ROLE_USER'], it means the roles array was empty
                 // and the ROLE_USER was added by the getRoles() method
@@ -43,10 +47,20 @@ class UserProcessor implements ProcessorInterface
                     $user->setRoles(['ROLE_USER']);
                 }
             }
+            
+            // Ensure isEmailVerified is false for new users
+            $user->setIsEmailVerified(false);
         }
         
         // Call the decorated processor to handle the actual persistence
-        return $this->decoratedProcessor->process($user, $operation, $uriVariables, $context);
+        $result = $this->decoratedProcessor->process($user, $operation, $uriVariables, $context);
+        
+        // Send verification email after successful user creation
+        if ($isNewUser) {
+            $this->emailService->sendEmailVerification($result);
+        }
+        
+        return $result;
     }
     
     /**
