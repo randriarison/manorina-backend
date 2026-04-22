@@ -13,7 +13,8 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
-use Symfony\Component\Uid\Uuid;
+use Psr\Log\LoggerInterface;
+use Symfony\Component\HttpKernel\Log\Logger;
 
 #[Route('/api/auth', name: 'api_auth_')]
 class AuthController extends AbstractController
@@ -31,7 +32,7 @@ class AuthController extends AbstractController
      * User Registration
      */
     #[Route('/register', name: 'register', methods: ['POST'])]
-    public function register(Request $request): JsonResponse
+    public function register(Request $request, LoggerInterface $logger): JsonResponse
     {
         try {
             $data = json_decode($request->getContent(), true);
@@ -106,7 +107,7 @@ class AuthController extends AbstractController
                 $this->emailService->sendEmailVerification($user);
             } catch (\Exception $e) {
                 // Log the error but don't fail registration
-                error_log('Failed to send verification email: ' . $e->getMessage());
+                $logger->error('Failed to send verification email: ' . $e->getMessage());
             }
 
             return new JsonResponse([
@@ -337,7 +338,7 @@ class AuthController extends AbstractController
      * Request Password Reset
      */
     #[Route('/forgot-password', name: 'forgot_password', methods: ['POST'])]
-    public function forgotPassword(Request $request): JsonResponse
+    public function forgotPassword(Request $request, LoggerInterface $logger): JsonResponse
     {
         try {
             $data = json_decode($request->getContent(), true);
@@ -370,7 +371,7 @@ class AuthController extends AbstractController
             try {
                 $this->emailService->sendPasswordReset($user);
             } catch (\Exception $e) {
-                error_log('Failed to send password reset email: ' . $e->getMessage());
+                $logger->error('Failed to send password reset email: ' . $e->getMessage());
             }
 
             return new JsonResponse([
@@ -448,7 +449,7 @@ class AuthController extends AbstractController
      * Resend Verification Email
      */
     #[Route('/resend-verification', name: 'resend_verification', methods: ['POST'])]
-    public function resendVerification(Request $request): JsonResponse
+    public function resendVerification(Request $request, LoggerInterface $logger): JsonResponse
     {
         try {
             $data = json_decode($request->getContent(), true);
@@ -487,7 +488,7 @@ class AuthController extends AbstractController
             try {
                 $this->emailService->sendEmailVerification($user);
             } catch (\Exception $e) {
-                error_log('Failed to send verification email: ' . $e->getMessage());
+                $logger->error('Failed to send verification email: ' . $e->getMessage());
                 return new JsonResponse([
                     'error' => 'Email failed',
                     'message' => 'Failed to send verification email'
