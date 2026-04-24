@@ -5,13 +5,13 @@ namespace App\Service;
 use App\Entity\User;
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
-use Symfony\Component\Mailer\MailerInterface;
+use Symfony\Component\Mailer\Transport\TransportInterface;
 use Symfony\Component\Mime\Address;
 
 class EmailService
 {
     public function __construct(
-        private MailerInterface $mailer,
+        private TransportInterface $mailer,
         private ParameterBagInterface $parameterBag
     ) {}
 
@@ -24,9 +24,9 @@ class EmailService
         );
 
         $email = (new TemplatedEmail())
-            ->from(new Address($_ENV['FROM_EMAIL'] ?? 'noreply@manorina.com', $_ENV['FROM_NAME'] ?? 'Manorina'))
+            ->from(new Address($_ENV['FROM_EMAIL'] ?? 'noreply@anao-ny-teny.com', $_ENV['FROM_NAME'] ?? 'Anao ny teny'))
             ->to($user->getEmail())
-            ->subject('Verify your email address - Manorina')
+            ->subject('Verify your email address - Anao ny teny')
             ->htmlTemplate('emails/email_verification.html.twig')
             ->context([
                 'user' => $user,
@@ -45,9 +45,9 @@ class EmailService
         );
 
         $email = (new TemplatedEmail())
-            ->from(new Address($_ENV['FROM_EMAIL'] ?? 'noreply@manorina.com', $_ENV['FROM_NAME'] ?? 'Manorina'))
+            ->from(new Address($_ENV['FROM_EMAIL'] ?? 'noreply@anao-ny-teny.com', $_ENV['FROM_NAME'] ?? 'Anao ny teny'))
             ->to($user->getEmail())
-            ->subject('Password Reset Request - Manorina')
+            ->subject('Password Reset Request - Anao ny teny')
             ->htmlTemplate('emails/password_reset.html.twig')
             ->context([
                 'user' => $user,
