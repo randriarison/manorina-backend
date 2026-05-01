@@ -179,7 +179,6 @@ class AuthController extends AbstractController
                     'email' => $user->getEmail(),
                     'name' => $user->getName(),
                     'email_verified' => true,
-                    'email_verified_at' => $user->getEmailVerifiedAt()?->format('Y-m-d H:i:s')
                 ]
             ]);
 

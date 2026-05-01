@@ -18,7 +18,7 @@ class EmailService
     public function sendEmailVerification(User $user): void
     {
         $verificationUrl = sprintf(
-            '%s/create-password?token=%s',
+            '%s?token=%s',
             ($_ENV['FRONTEND_URL'] ?? 'http://localhost:8080') . '/verify-email',
             $user->getEmailVerificationToken()
         );
