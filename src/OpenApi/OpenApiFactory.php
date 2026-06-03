@@ -76,7 +76,9 @@ final class OpenApiFactory implements OpenApiFactoryInterface
                                 'properties' => [
                                     'email' => ['type' => 'string', 'format' => 'email', 'example' => 'user@example.com'],
                                     'password' => ['type' => 'string', 'minLength' => 8, 'example' => 'StrongPass123!'],
-                                    'name' => ['type' => 'string', 'example' => 'John Doe']
+                                    'name' => ['type' => 'string', 'example' => 'John Doe'],
+                                    'ageRange' => ['type' => 'string', 'example' => '25-34'],
+                                    'regionOfResidence' => ['type' => 'string', 'format' => 'uuid', 'example' => '123e4567-e89b-12d3-a456-426614174000']
                                 ]
                             ])
                         )

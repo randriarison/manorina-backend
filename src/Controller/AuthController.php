@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\User;
+use App\Entity\Region;
 use App\Service\EmailService;
 use App\Service\EmailValidationService;
 use Doctrine\ORM\EntityManagerInterface;
@@ -48,6 +49,8 @@ class AuthController extends AbstractController
             $email = trim($data['email']);
             $password = $data['password'];
             $name = $data['name'] ?? null;
+            $ageRange = $data['ageRange'] ?? null;
+            $regionOfResidenceId = $data['regionOfResidence'] ?? null;
 
             // Validate email
             if (!$this->emailValidationService->isValidEmail($email)) {
@@ -80,6 +83,19 @@ class AuthController extends AbstractController
             $user->setEmail($email)
                  ->setName($name)
                  ->setRoles(['ROLE_USER']);
+
+            // Set age range if provided
+            if ($ageRange) {
+                $user->setAgeRange($ageRange);
+            }
+
+            // Set region of residence if provided
+            if ($regionOfResidenceId) {
+                $region = $this->em->getRepository(Region::class)->find($regionOfResidenceId);
+                if ($region) {
+                    $user->setRegionOfResidence($region);
+                }
+            }
 
             // Hash password
             $hashedPassword = $this->passwordHasher->hashPassword($user, $password);

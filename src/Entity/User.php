@@ -69,7 +69,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?Uuid $id = null;
 
     #[ORM\Column(length: 180)]
-    #[Groups(['article:read', 'article:details', 'user:read', 'user:write', 'user:add', 'user:admin-read'])]
+    #[Groups(['article:read', 'article:details', 'user:read', 'user:add', 'user:admin-read'])]
     private ?string $email = null;
 
     /**
@@ -95,7 +95,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?string $facebookId = null;
 
     #[ORM\Column(length: 255, nullable: true)]
-   #[Groups(['article:read', 'article:details', 'user:read', 'user:write', 'user:admin-read'])]
+   #[Groups(['article:read', 'article:details', 'user:read', 'user:write', 'user:add', 'user:admin-read'])]
     private ?string $name = null;
 
     #[ORM\Column(length: 255, nullable: true)]
@@ -140,6 +140,23 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(nullable: true)]
     #[Groups(['user:admin-read'])]
     private ?int $nbPublishedArticles = null;
+
+    #[ORM\Column(length: 50, nullable: true)]
+    #[Groups(['article:read', 'article:details', 'user:read', 'user:write', 'user:add', 'user:admin-read'])]
+    private ?string $ageRange = null;
+
+    #[ORM\ManyToOne(inversedBy: 'users')]
+    #[Groups(['article:read', 'article:details', 'user:read', 'user:write', 'user:add', 'user:admin-read'])]
+    private ?Region $regionOfResidence = null;
+
+    #[ORM\ManyToOne(inversedBy: 'users')]
+    private ?Commune $communeOfResidence = null;
+
+    #[ORM\ManyToOne(inversedBy: 'users')]
+    private ?District $districtOfResidence = null;
+
+    #[ORM\ManyToOne(inversedBy: 'users')]
+    private ?Fokontany $FokontanyOfResidence = null;
 
     public function __construct()
     {
@@ -451,6 +468,66 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setNbPublishedArticles(?int $nbPublishedArticles): static
     {
         $this->nbPublishedArticles = $nbPublishedArticles;
+
+        return $this;
+    }
+
+    public function getAgeRange(): ?string
+    {
+        return $this->ageRange;
+    }
+
+    public function setAgeRange(?string $ageRange): static
+    {
+        $this->ageRange = $ageRange;
+
+        return $this;
+    }
+
+    public function getRegionOfResidence(): ?Region
+    {
+        return $this->regionOfResidence;
+    }
+
+    public function setRegionOfResidence(?Region $regionOfResidence): static
+    {
+        $this->regionOfResidence = $regionOfResidence;
+
+        return $this;
+    }
+
+    public function getCommuneOfResidence(): ?Commune
+    {
+        return $this->communeOfResidence;
+    }
+
+    public function setCommuneOfResidence(?Commune $communeOfResidence): static
+    {
+        $this->communeOfResidence = $communeOfResidence;
+
+        return $this;
+    }
+
+    public function getDistrictOfResidence(): ?District
+    {
+        return $this->districtOfResidence;
+    }
+
+    public function setDistrictOfResidence(?District $districtOfResidence): static
+    {
+        $this->districtOfResidence = $districtOfResidence;
+
+        return $this;
+    }
+
+    public function getFokontanyOfResidence(): ?Fokontany
+    {
+        return $this->FokontanyOfResidence;
+    }
+
+    public function setFokontanyOfResidence(?Fokontany $FokontanyOfResidence): static
+    {
+        $this->FokontanyOfResidence = $FokontanyOfResidence;
 
         return $this;
     }
